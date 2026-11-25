@@ -19,6 +19,12 @@ body {
   color: var(--text);
   font-family: Arial, sans-serif;
   transition: background 0.3s, color 0.3s;
+
+  background-image:
+    radial-gradient(circle, var(--secondary) 1.5px, transparent 1.5px),
+    radial-gradient(circle, var(--secondary) 1px, transparent 1px);
+  background-size: 30px 30px, 60px 60px;
+  background-position: 0 0, 15px 15px;
 }
 
 header {
@@ -49,7 +55,6 @@ button {
   padding: 10px 15px;
   background: var(--primary);
   color: white;
-  transition: opacity 0.2s, outline 0.2s;
 }
 
 button:hover {
@@ -186,7 +191,6 @@ form input {
 #timer-display {
   font-size: clamp(55px, 12vw, 85px);
   margin: 35px 0;
-  font-weight: bold;
 }
 
 #timer-mode {
@@ -202,11 +206,6 @@ form input {
 
 .theme-choice {
   padding: 15px;
-}
-
-.theme-choice.active {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
 }
 
 .mode-btn {
@@ -255,7 +254,6 @@ form input {
 .calendar-day:hover,
 .calendar-day.selected {
   outline: 2px solid var(--primary);
-  outline-offset: 1px;
 }
 
 .calendar-day.today {
@@ -302,9 +300,6 @@ form input {
 
 .calendar-task.completed {
   opacity: 0.6;
-}
-
-.calendar-task.completed strong {
   text-decoration: line-through;
 }
 
@@ -314,16 +309,34 @@ footer {
   opacity: 0.7;
 }
 
-.goal-item label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Assignment due dates */
+.assignment-item.overdue,
+.calendar-task.overdue {
+  border: 2px solid #d94b4b;
+  background: #fff0f0;
 }
 
-.goal-item input {
-  min-width: auto;
+.assignment-due-status {
+  font-weight: bold;
+  margin-top: 5px;
+  display: inline-block;
 }
 
+.assignment-due-status.overdue {
+  color: #d32626;
+}
+
+body.dark .assignment-item.overdue,
+body.dark .calendar-task.overdue {
+  background: #432b36;
+  border-color: #e06b75;
+}
+
+body.dark .assignment-due-status.overdue {
+  color: #ff8585;
+}
+
+/* Theme colors */
 body[data-theme="ocean"] {
   --background: #eaf4ff;
   --card: #ffffff;
@@ -404,30 +417,36 @@ body.dark {
   --border: #414968;
 }
 
-.assignment-item.overdue,
-.calendar-task.overdue {
-  border: 2px solid #d94b4b;
-  background: #fff0f0;
-}
+/* Background quotes */
+body::after {
+  content:
+    "Small steps every day add up to big results. \A\A"
+    "You are capable of more than you think. \A\A"
+    "Progress, not perfection. \A\A"
+    "Your future is created by what you do today.";
 
-.assignment-due-status {
+  white-space: pre-line;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 230px;
+  font-size: 15px;
+  line-height: 2;
+  font-style: italic;
   font-weight: bold;
-  margin-top: 5px;
-  display: inline-block;
+  color: var(--primary);
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.assignment-due-status.overdue {
-  color: #d32626;
-}
-
-body.dark .assignment-item.overdue,
-body.dark .calendar-task.overdue {
-  background: #432b36;
-  border-color: #e06b75;
-}
-
-body.dark .assignment-due-status.overdue {
-  color: #ff8585;
+/* Keep app content above background decorations */
+header,
+nav,
+main,
+footer {
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 600px) {
@@ -454,7 +473,7 @@ body.dark .assignment-due-status.overdue {
     align-items: flex-start;
   }
 
-  .calendar-header {
-    flex-wrap: wrap;
+  body::after {
+    display: none;
   }
 }
