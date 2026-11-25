@@ -1,6 +1,6 @@
 
-const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+const SUPABASE_URL = "https://hfptgwikjcpxnvymjgvp.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "sb_publishable_JSuurSrSHEvhiT7vWkySGA_OCVKiy5f";
 
 const SUPABASE_READY = SUPABASE_URL.startsWith("https://") &&
   !SUPABASE_URL.includes("PASTE_") &&
