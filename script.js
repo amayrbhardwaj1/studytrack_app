@@ -1,482 +1,915 @@
 
-let assignments = JSON.parse(localStorage.getItem("assignments")) || [];
-let grades = JSON.parse(localStorage.getItem("grades")) || [];
-let goals = JSON.parse(localStorage.getItem("goals")) || [];
-let points = Number(localStorage.getItem("points")) || 0;
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
 
-function saveData() {
-    localStorage.setItem("assignments", JSON.stringify(assignments));
-    localStorage.setItem("grades", JSON.stringify(grades));
-    localStorage.setItem("goals", JSON.stringify(goals));
-    localStorage.setItem("points", points);
+const SUPABASE_READY = SUPABASE_URL.startsWith("https://") &&
+  !SUPABASE_URL.includes("PASTE_") &&
+  !SUPABASE_ANON_KEY.includes("PASTE_");
+
+let supabaseClient = null;
+
+if (SUPABASE_READY && window.supabase) {
+  supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
 }
 
-/* PAGE NAVIGATION */
+const $ = id => document.getElementById(id);
+
+const validThemes = [
+  "ocean", "mocha", "summer", "voltage",
+  "forest", "blush", "midnight", "sunset"
+];
+
+let assignments = [];
+let grades = [];
+let goals = [];
+let points = 0;
+let sessions = 0;
+let currentUser = null;
+let authMode = "login";
+let syncTimer = null;
+let tickHandle = null;
+
+let timerState = {
+  minutes: 25,
+  label: "Focus time",
+  remaining: 1500,
+  endAt: null,
+  running: false
+};
+
+function readLocal(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function localData() {
+  return {
+    assignments,
+    grades,
+    goals,
+    points,
+    sessions,
+    theme: document.body.dataset.theme || "ocean",
+    mode: document.body.dataset.mode || "light"
+  };
+}
+
+function applyData(data = {}) {
+  assignments = Array.isArray(data.assignments) ? data.assignments : [];
+  grades = Array.isArray(data.grades) ? data.grades : [];
+  goals = Array.isArray(data.goals) ? data.goals : [];
+  points = Number(data.points) || 0;
+  sessions = Number(data.sessions) || 0;
+
+  if (validThemes.includes(data.theme)) changeTheme(data.theme, false);
+  changeMode(data.mode === "dark" ? "dark" : "light", false);
+
+  saveLocal();
+  updateAll();
+}
+
+function saveLocal() {
+  localStorage.setItem("studytrack_data", JSON.stringify(localData()));
+}
+
+function scheduleSync() {
+  saveLocal();
+
+  if (!currentUser || !supabaseClient) return;
+
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 700);
+}
+
+async function syncToCloud() {
+  if (!currentUser || !supabaseClient) return;
+
+  const payload = {
+    user_id: currentUser.id,
+    data: localData(),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabaseClient
+    .from("studytrack_data")
+    .upsert(payload, { onConflict: "user_id" });
+
+  if (error) console.error("StudyTrack sync error:", error.message);
+}
+
+async function loadCloudData() {
+  const { data, error } = await supabaseClient
+    .from("studytrack_data")
+    .select("data")
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    applyData(readLocal("studytrack_data", {}));
+    return;
+  }
+
+  if (data && data.data) {
+    applyData(data.data);
+  } else {
+    applyData(readLocal("studytrack_data", {}));
+    await syncToCloud();
+  }
+}
+
+/* LOGIN AND SIGNUP */
+
+function setAuthMode(mode) {
+  authMode = mode;
+
+  $("showLogin").classList.toggle("active", mode === "login");
+  $("showSignup").classList.toggle("active", mode === "signup");
+
+  $("authSubmit").textContent =
+    mode === "login" ? "Log in" : "Create free account";
+
+  $("authPassword").autocomplete =
+    mode === "login" ? "current-password" : "new-password";
+
+  $("authMessage").textContent =
+    mode === "login"
+      ? "Log in to continue to StudyTrack."
+      : "Create your free StudyTrack account.";
+}
+
+$("showLogin").addEventListener("click", () => setAuthMode("login"));
+$("showSignup").addEventListener("click", () => setAuthMode("signup"));
+
+function showApp() {
+  $("authScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("userEmail").textContent = currentUser?.email || "";
+}
+
+function showAuth() {
+  $("app").classList.add("hidden");
+  $("authScreen").classList.remove("hidden");
+}
+
+$("authForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const email = $("authEmail").value.trim();
+  const password = $("authPassword").value;
+
+  $("authSubmit").disabled = true;
+  $("authMessage").textContent = "Please wait…";
+
+  try {
+    if (!supabaseClient) {
+      $("authMessage").textContent =
+        "Connect Supabase first. Add your project URL and public key in script.js.";
+      return;
+    }
+
+    const result = authMode === "signup"
+      ? await supabaseClient.auth.signUp({ email, password })
+      : await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (result.error) throw result.error;
+
+    if (authMode === "signup" && !result.data.session) {
+      $("authMessage").textContent =
+        "Account created! Check your email to confirm it, then log in.";
+      setAuthMode("login");
+      return;
+    }
+
+    currentUser = result.data.user;
+    await loadCloudData();
+    showApp();
+
+  } catch (error) {
+    $("authMessage").textContent =
+      error.message || "Could not sign in. Please try again.";
+  } finally {
+    $("authSubmit").disabled = false;
+  }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+  if (supabaseClient) {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) console.error(error);
+  }
+
+  currentUser = null;
+  showAuth();
+});
+
+async function initializeAuth() {
+  if (!supabaseClient) {
+    applyData(readLocal("studytrack_data", {}));
+    showAuth();
+    $("authMessage").textContent =
+      "Supabase setup is needed for accounts. Add your free project keys in script.js.";
+    return;
+  }
+
+  const { data: { session } } =
+    await supabaseClient.auth.getSession();
+
+  if (session?.user) {
+    currentUser = session.user;
+    await loadCloudData();
+    showApp();
+  } else {
+    showAuth();
+  }
+
+  supabaseClient.auth.onAuthStateChange(async (_event, sessionNow) => {
+    if (sessionNow?.user) {
+      currentUser = sessionNow.user;
+      await loadCloudData();
+      showApp();
+    } else {
+      currentUser = null;
+      showAuth();
+    }
+  });
+}
+
+/* NAVIGATION */
 
 const pageInfo = {
-    dashboard: ["Dashboard", "Welcome back! Let's get things done."],
-    assignments: ["Assignments", "Organize your schoolwork."],
-    timer: ["Study Timer", "Make time for focused studying."],
-    grades: ["Grade Tracker", "Keep an eye on your grades."],
-    goals: ["My Goals", "Keep working towards your goals."],
-    settings: ["Settings", "Customize your StudySmart experience."]
+  dashboard: ["Dashboard", "Welcome back! Let's get things done."],
+  assignments: ["Assignments", "Organize your schoolwork."],
+  timer: ["Study Timer", "Make time for focused studying."],
+  grades: ["Grade Tracker", "Keep an eye on your grades."],
+  goals: ["My Goals", "Keep working towards your goals."],
+  settings: ["Settings", "Customize your StudyTrack experience."]
 };
 
 function showPage(page) {
-    document.querySelectorAll(".page").forEach(section => {
-        section.classList.remove("active");
-    });
+  if (!pageInfo[page]) return;
 
-    document.getElementById(page).classList.add("active");
+  document.querySelectorAll(".page").forEach(section => {
+    section.classList.toggle("active", section.id === page);
+  });
 
-    document.querySelectorAll(".nav-button").forEach(button => {
-        button.classList.toggle("active", button.dataset.page === page);
-    });
+  document.querySelectorAll(".nav-button").forEach(button => {
+    button.classList.toggle("active", button.dataset.page === page);
+  });
 
-    document.getElementById("pageTitle").textContent = pageInfo[page][0];
-    document.getElementById("pageSubtitle").textContent = pageInfo[page][1];
+  $("pageTitle").textContent = pageInfo[page][0];
+  $("pageSubtitle").textContent = pageInfo[page][1];
 }
 
 document.querySelectorAll(".nav-button").forEach(button => {
-    button.addEventListener("click", () => {
-        showPage(button.dataset.page);
-    });
+  button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
-/* HELPER FUNCTIONS */
-
-function createElement(tag, className, text) {
-    const element = document.createElement(tag);
-
-    if (className) {
-        element.className = className;
-    }
-
-    if (text !== undefined) {
-        element.textContent = text;
-    }
-
-    return element;
-}
-
-function showEmpty(container, message) {
-    container.replaceChildren(
-        createElement("p", "empty-message", message)
-    );
-}
-
-function formatDate(date) {
-    if (!date) return "No due date";
-
-    return new Date(date + "T00:00:00").toLocaleDateString();
-}
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.go));
+});
 
 /* ASSIGNMENTS */
 
-function updateAssignments() {
-    const list = document.getElementById("assignmentList");
-    const dashboardList = document.getElementById("dashboardAssignments");
+function make(tag, className, text) {
+  const element = document.createElement(tag);
 
-    list.replaceChildren();
-    dashboardList.replaceChildren();
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
 
-    const sortedAssignments = [...assignments].sort((a, b) => {
-        return (a.date || "").localeCompare(b.date || "");
-    });
-
-    if (assignments.length === 0) {
-        showEmpty(list, "No assignments yet. Add one above!");
-        showEmpty(dashboardList, "Your upcoming assignments will appear here.");
-    }
-
-    sortedAssignments.forEach((assignment) => {
-        const originalIndex = assignments.indexOf(assignment);
-
-        const row = createElement("div", "item-row");
-        const info = createElement("div", "item-info");
-
-        const name = createElement(
-            "strong",
-            assignment.done ? "done-text" : "",
-            assignment.name
-        );
-
-        const details = createElement(
-            "span",
-            "",
-            assignment.subject + " • Due " + formatDate(assignment.date)
-        );
-
-        info.append(name, details);
-
-        const actions = createElement("div", "item-actions");
-
-        const priority = createElement(
-            "span",
-            "priority " + assignment.priority,
-            assignment.priority
-        );
-
-        const complete = createElement(
-            "button",
-            "complete-button",
-            assignment.done ? "Undo" : "Complete"
-        );
-
-        complete.addEventListener("click", () => {
-            assignment.done = !assignment.done;
-
-            if (assignment.done) {
-                points += 10;
-            } else {
-                points = Math.max(0, points - 10);
-            }
-
-            saveData();
-            updateAll();
-        });
-
-        const deleteButton = createElement(
-            "button",
-            "delete-button",
-            "Delete"
-        );
-
-        deleteButton.addEventListener("click", () => {
-            assignments.splice(originalIndex, 1);
-            saveData();
-            updateAll();
-        });
-
-        actions.append(priority, complete, deleteButton);
-        row.append(info, actions);
-        list.append(row);
-
-        if (!assignment.done) {
-            const dashboardRow = createElement("div", "item-row");
-            const dashboardInfo = createElement("div", "item-info");
-
-            dashboardInfo.append(
-                createElement("strong", "", assignment.name),
-                createElement(
-                    "span",
-                    "",
-                    assignment.subject + " • " + formatDate(assignment.date)
-                )
-            );
-
-            dashboardRow.append(dashboardInfo);
-            dashboardList.append(dashboardRow);
-        }
-    });
-
-    if (dashboardList.children.length === 0 && assignments.length > 0) {
-        showEmpty(dashboardList, "All caught up! No unfinished assignments.");
-    }
-
-    const completedCount = assignments.filter(a => a.done).length;
-    const totalCount = assignments.length;
-    const remainingCount = totalCount - completedCount;
-
-    const percentage = totalCount === 0
-        ? 0
-        : Math.round((completedCount / totalCount) * 100);
-
-    document.getElementById("total").textContent = totalCount;
-    document.getElementById("completed").textContent = completedCount;
-    document.getElementById("remaining").textContent = remainingCount;
-    document.getElementById("points").textContent = points;
-    document.getElementById("progress").style.width = percentage + "%";
-    document.getElementById("progressText").textContent = percentage + "%";
-    document.getElementById("assignmentCount").textContent =
-        totalCount + (totalCount === 1 ? " assignment" : " assignments");
+  return element;
 }
 
-document.getElementById("assignmentForm").addEventListener("submit", function(event) {
-    event.preventDefault();
+function empty(container, message) {
+  container.replaceChildren(make("p", "empty-message", message));
+}
 
-    assignments.push({
-        name: document.getElementById("assignmentName").value.trim(),
-        subject: document.getElementById("subject").value,
-        date: document.getElementById("dueDate").value,
-        priority: document.getElementById("priority").value,
-        done: false
+function formatDate(date) {
+  if (!date) return "No due date";
+
+  const parsed = new Date(`${date}T00:00:00`);
+
+  return Number.isNaN(parsed.getTime())
+    ? date
+    : parsed.toLocaleDateString();
+}
+
+function updateAssignments() {
+  const list = $("assignmentList");
+  const dashboard = $("dashboardAssignments");
+
+  list.replaceChildren();
+  dashboard.replaceChildren();
+
+  const sorted = [...assignments].sort((a, b) =>
+    (a.date || "").localeCompare(b.date || "")
+  );
+
+  if (!sorted.length) {
+    empty(list, "No assignments yet. Import a calendar or add one above!");
+    empty(dashboard, "Your upcoming assignments will appear here.");
+  }
+
+  sorted.forEach(item => {
+    const row = make("div", "item-row");
+    const info = make("div", "item-info");
+
+    info.append(
+      make("strong", item.done ? "done-text" : "", item.name),
+      make("span", "", `${item.subject || "School"} • Due ${formatDate(item.date)}`)
+    );
+
+    const actions = make("div", "item-actions");
+
+    actions.append(
+      make("span", `priority ${item.priority || "Medium"}`, item.priority || "Medium")
+    );
+
+    const complete = make(
+      "button",
+      "complete-button",
+      item.done ? "Undo" : "Complete"
+    );
+
+    complete.addEventListener("click", () => {
+      item.done = !item.done;
+      points = Math.max(0, points + (item.done ? 10 : -10));
+      scheduleSync();
+      updateAll();
     });
 
-    saveData();
-    this.reset();
-    document.getElementById("priority").value = "Medium";
+    const remove = make("button", "delete-button", "Delete");
+
+    remove.addEventListener("click", () => {
+      assignments = assignments.filter(a => a.id !== item.id);
+      scheduleSync();
+      updateAll();
+    });
+
+    actions.append(complete, remove);
+    row.append(info, actions);
+    list.append(row);
+
+    if (!item.done) {
+      const dashRow = make("div", "item-row");
+      const dashInfo = make("div", "item-info");
+
+      dashInfo.append(
+        make("strong", "", item.name),
+        make("span", "", `${item.subject || "School"} • ${formatDate(item.date)}`)
+      );
+
+      dashRow.append(dashInfo);
+      dashboard.append(dashRow);
+    }
+  });
+
+  if (!dashboard.children.length && assignments.length) {
+    empty(dashboard, "All caught up! No unfinished assignments.");
+  }
+
+  const done = assignments.filter(a => a.done).length;
+  const total = assignments.length;
+  const percent = total ? Math.round(done / total * 100) : 0;
+
+  $("total").textContent = total;
+  $("completed").textContent = done;
+  $("remaining").textContent = total - done;
+  $("points").textContent = points;
+  $("progress").style.width = `${percent}%`;
+  $("progressText").textContent = `${percent}%`;
+
+  $("assignmentCount").textContent =
+    `${total} assignment${total === 1 ? "" : "s"}`;
+}
+
+$("assignmentForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  assignments.push({
+    id: crypto.randomUUID(),
+    name: $("assignmentName").value.trim(),
+    subject: $("subject").value,
+    date: $("dueDate").value,
+    priority: $("priority").value,
+    done: false
+  });
+
+  event.target.reset();
+  $("priority").value = "Medium";
+
+  scheduleSync();
+  updateAll();
+});
+
+/* CALENDAR IMPORT */
+
+function parseICS(text) {
+  const unfolded = text.replace(/\r?\n[ \t]/g, "");
+  const events = unfolded.split("BEGIN:VEVENT").slice(1);
+  const result = [];
+
+  for (const block of events) {
+    const title = block.match(/^SUMMARY(?:;[^:]*)?:(.*)$/mi)?.[1]?.trim();
+
+    const rawDate =
+      block.match(/^DTSTART(?:;[^:]*)?:(\d{8})/mi)?.[1] ||
+      block.match(/^DUE(?:;[^:]*)?:(\d{8})/mi)?.[1];
+
+    if (!title || !rawDate) continue;
+
+    const date =
+      `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}`;
+
+    result.push({
+      name: title.replace(/\\n/g, " ").replace(/\\,/g, ","),
+      date,
+      subject: "Imported calendar",
+      priority: "Medium",
+      done: false
+    });
+  }
+
+  return result;
+}
+
+function parseCSV(text) {
+  const rows = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(line => line.trim());
+
+  if (rows.length < 2) return [];
+
+  const split = line => {
+    const cells = [];
+    let current = "";
+    let quoted = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (ch === '"' && line[i + 1] === '"' && quoted) {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        quoted = !quoted;
+      } else if (ch === "," && !quoted) {
+        cells.push(current.trim());
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+
+    cells.push(current.trim());
+    return cells;
+  };
+
+  const headers = split(rows[0]).map(h => h.toLowerCase());
+
+  const nameIndex = headers.findIndex(h =>
+    /title|subject|assignment|event|summary|name/.test(h)
+  );
+
+  const dateIndex = headers.findIndex(h =>
+    /due|date|start/.test(h)
+  );
+
+  if (nameIndex < 0 || dateIndex < 0) {
+    throw new Error("CSV needs a title/assignment column and a date/due column.");
+  }
+
+  return rows.slice(1).map(line => {
+    const cells = split(line);
+    const raw = cells[dateIndex] || "";
+    let date = raw;
+
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
+      const [m, d, y] = raw.split("/");
+      date = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    } else if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+      date = raw.slice(0, 10);
+    }
+
+    return {
+      name: cells[nameIndex],
+      date,
+      subject: "Imported calendar",
+      priority: "Medium",
+      done: false
+    };
+  }).filter(item =>
+    item.name && /^\d{4}-\d{2}-\d{2}$/.test(item.date)
+  );
+}
+
+$("importCalendar").addEventListener("click", async () => {
+  const file = $("calendarFile").files[0];
+  const message = $("importMessage");
+
+  if (!file) {
+    message.textContent = "Choose an .ics or .csv file first.";
+    return;
+  }
+
+  try {
+    const text = await file.text();
+
+    const imported = file.name.toLowerCase().endsWith(".ics")
+      ? parseICS(text)
+      : file.name.toLowerCase().endsWith(".csv")
+        ? parseCSV(text)
+        : null;
+
+    if (!imported) {
+      throw new Error("Please upload an .ics or .csv file.");
+    }
+
+    if (!imported.length) {
+      throw new Error("I couldn't find calendar events with both a title and a date.");
+    }
+
+    const existing = new Set(
+      assignments.map(a => `${a.name}|${a.date}`)
+    );
+
+    const unique = imported.filter(a =>
+      !existing.has(`${a.name}|${a.date}`)
+    );
+
+    assignments.push(
+      ...unique.map(a => ({ ...a, id: crypto.randomUUID() }))
+    );
+
+    scheduleSync();
     updateAll();
+
+    message.textContent =
+      `Imported ${unique.length} assignment(s). ${imported.length - unique.length} duplicate(s) skipped.`;
+
+    $("calendarFile").value = "";
+
+  } catch (error) {
+    message.textContent = error.message;
+  }
 });
 
 /* GRADES */
 
 function updateGrades() {
-    const list = document.getElementById("gradeList");
-    list.replaceChildren();
+  const list = $("gradeList");
+  list.replaceChildren();
 
-    if (grades.length === 0) {
-        showEmpty(list, "No grades yet. Add your first grade!");
-    }
+  if (!grades.length) {
+    empty(list, "No grades yet. Add your first grade!");
+  }
 
-    grades.forEach((grade, index) => {
-        const row = createElement("div", "item-row");
-        const info = createElement("div", "item-info");
+  grades.forEach(grade => {
+    const row = make("div", "item-row");
+    const info = make("div", "item-info");
 
-        info.append(
-            createElement("strong", "", grade.subject),
-            createElement("span", "", "Grade: " + grade.value + "%")
-        );
+    info.append(
+      make("strong", "", grade.subject),
+      make("span", "", `Grade: ${grade.value}%`)
+    );
 
-        const deleteButton = createElement(
-            "button",
-            "delete-button",
-            "Delete"
-        );
+    const remove = make("button", "delete-button", "Delete");
 
-        deleteButton.addEventListener("click", () => {
-            grades.splice(index, 1);
-            saveData();
-            updateGrades();
-        });
-
-        row.append(info, deleteButton);
-        list.append(row);
+    remove.addEventListener("click", () => {
+      grades = grades.filter(g => g.id !== grade.id);
+      scheduleSync();
+      updateGrades();
     });
 
-    const average = grades.length === 0
-        ? 0
-        : grades.reduce((total, grade) => total + grade.value, 0) / grades.length;
+    row.append(info, remove);
+    list.append(row);
+  });
 
-    document.getElementById("average").textContent =
-        average.toFixed(1) + "%";
+  const average = grades.length
+    ? grades.reduce((sum, g) => sum + Number(g.value), 0) / grades.length
+    : 0;
+
+  $("average").textContent = `${average.toFixed(1)}%`;
 }
 
-document.getElementById("gradeForm").addEventListener("submit", function(event) {
-    event.preventDefault();
+$("gradeForm").addEventListener("submit", event => {
+  event.preventDefault();
 
-    const value = Number(document.getElementById("gradeValue").value);
+  const value = Number($("gradeValue").value);
 
-    if (value < 0 || value > 100) {
-        alert("Please enter a grade between 0 and 100.");
-        return;
-    }
+  if (value < 0 || value > 100) {
+    alert("Please enter a grade between 0 and 100.");
+    return;
+  }
 
-    grades.push({
-        subject: document.getElementById("gradeSubject").value.trim(),
-        value: value
-    });
+  grades.push({
+    id: crypto.randomUUID(),
+    subject: $("gradeSubject").value.trim(),
+    value
+  });
 
-    saveData();
-    this.reset();
-    updateGrades();
+  event.target.reset();
+  scheduleSync();
+  updateGrades();
 });
 
 /* GOALS */
 
 function updateGoals() {
-    const list = document.getElementById("goalList");
-    list.replaceChildren();
+  const list = $("goalList");
+  list.replaceChildren();
 
-    if (goals.length === 0) {
-        showEmpty(list, "No goals yet. Create one to get started!");
-    }
+  if (!goals.length) {
+    empty(list, "No goals yet. Create one to get started!");
+  }
 
-    goals.forEach((goal, index) => {
-        const row = createElement("div", "item-row");
-        const info = createElement("div", "item-info");
+  goals.forEach(goal => {
+    const row = make("div", "item-row");
+    const info = make("div", "item-info");
 
-        info.append(
-            createElement(
-                "strong",
-                goal.done ? "done-text" : "",
-                goal.name
-            ),
-            createElement(
-                "span",
-                "",
-                goal.done ? "Goal completed!" : "Keep working towards it!"
-            )
-        );
+    info.append(
+      make("strong", goal.done ? "done-text" : "", goal.name),
+      make("span", "", goal.done ? "Goal completed!" : "Keep working towards it!")
+    );
 
-        const actions = createElement("div", "item-actions");
+    const actions = make("div", "item-actions");
 
-        const complete = createElement(
-            "button",
-            "complete-button",
-            goal.done ? "Undo" : "Complete"
-        );
+    const complete = make(
+      "button",
+      "complete-button",
+      goal.done ? "Undo" : "Complete"
+    );
 
-        complete.addEventListener("click", () => {
-            goal.done = !goal.done;
-            saveData();
-            updateGoals();
-        });
-
-        const deleteButton = createElement(
-            "button",
-            "delete-button",
-            "Delete"
-        );
-
-        deleteButton.addEventListener("click", () => {
-            goals.splice(index, 1);
-            saveData();
-            updateGoals();
-        });
-
-        actions.append(complete, deleteButton);
-        row.append(info, actions);
-        list.append(row);
+    complete.addEventListener("click", () => {
+      goal.done = !goal.done;
+      scheduleSync();
+      updateGoals();
     });
+
+    const remove = make("button", "delete-button", "Delete");
+
+    remove.addEventListener("click", () => {
+      goals = goals.filter(g => g.id !== goal.id);
+      scheduleSync();
+      updateGoals();
+    });
+
+    actions.append(complete, remove);
+    row.append(info, actions);
+    list.append(row);
+  });
 }
 
-document.getElementById("goalForm").addEventListener("submit", function(event) {
-    event.preventDefault();
+$("goalForm").addEventListener("submit", event => {
+  event.preventDefault();
 
-    goals.push({
-        name: document.getElementById("goalName").value.trim(),
-        done: false
-    });
+  goals.push({
+    id: crypto.randomUUID(),
+    name: $("goalName").value.trim(),
+    done: false
+  });
 
-    saveData();
-    this.reset();
-    updateGoals();
+  event.target.reset();
+  scheduleSync();
+  updateGoals();
 });
 
-/* STUDY TIMER */
+/* TIMER */
 
-let seconds = 25 * 60;
-let timer = null;
-let currentMinutes = 25;
-let currentLabel = "Focus time";
-
-let sessions = Number(localStorage.getItem("sessions")) || 0;
-
-function displayTime() {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-
-    document.getElementById("time").textContent =
-        String(minutes).padStart(2, "0") + ":" +
-        String(remainingSeconds).padStart(2, "0");
+function saveTimer() {
+  localStorage.setItem("studytrack_timer", JSON.stringify(timerState));
 }
 
-function setTimer(minutes, button, label) {
-    clearInterval(timer);
-    timer = null;
+function renderTimer() {
+  let seconds = timerState.remaining;
 
-    currentMinutes = minutes;
-    currentLabel = label;
-    seconds = minutes * 60;
+  if (timerState.running && timerState.endAt) {
+    seconds = Math.max(
+      0,
+      Math.ceil((timerState.endAt - Date.now()) / 1000)
+    );
+  }
 
-    document.getElementById("timerLabel").textContent = label.toUpperCase();
-    document.getElementById("timerMessage").textContent = "Ready when you are.";
+  timerState.remaining = seconds;
 
-    document.querySelectorAll(".mode-button").forEach(button => {
-        button.classList.remove("selected");
-    });
+  $("time").textContent =
+    `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 
-    button.classList.add("selected");
-    displayTime();
+  $("timerLabel").textContent = timerState.label.toUpperCase();
+  $("sessions").textContent = sessions;
+}
+
+function finishTimer() {
+  timerState.running = false;
+  timerState.endAt = null;
+  timerState.remaining = 0;
+
+  if (timerState.label === "Focus time") {
+    sessions++;
+    scheduleSync();
+  }
+
+  saveTimer();
+  renderTimer();
+
+  $("timerMessage").textContent =
+    `${timerState.label} completed!`;
+
+  if (document.visibilityState === "visible") {
+    alert(`${timerState.label} is finished!`);
+  }
+}
+
+function timerTick() {
+  if (!timerState.running) return;
+
+  if (Date.now() >= timerState.endAt) {
+    finishTimer();
+    return;
+  }
+
+  renderTimer();
+  saveTimer();
 }
 
 function startTimer() {
-    if (timer !== null) return;
+  if (timerState.running) return;
 
-    if (seconds <= 0) {
-        seconds = currentMinutes * 60;
-    }
+  if (timerState.remaining <= 0) {
+    timerState.remaining = timerState.minutes * 60;
+  }
 
-    document.getElementById("timerMessage").textContent = "You've got this!";
+  timerState.endAt =
+    Date.now() + timerState.remaining * 1000;
 
-    timer = setInterval(() => {
-        if (seconds > 0) {
-            seconds--;
-            displayTime();
-        } else {
-            clearInterval(timer);
-            timer = null;
+  timerState.running = true;
 
-            if (currentLabel === "Focus time") {
-                sessions++;
-                localStorage.setItem("sessions", sessions);
-                document.getElementById("sessions").textContent = sessions;
-            }
+  $("timerMessage").textContent = "You've got this!";
 
-            document.getElementById("timerMessage").textContent =
-                currentLabel + " completed!";
+  saveTimer();
+  timerTick();
 
-            alert(currentLabel + " is finished!");
-        }
-    }, 1000);
+  if (tickHandle) clearInterval(tickHandle);
+  tickHandle = setInterval(timerTick, 250);
 }
 
 function pauseTimer() {
-    clearInterval(timer);
-    timer = null;
-    document.getElementById("timerMessage").textContent = "Timer paused.";
+  if (timerState.running) {
+    timerState.remaining = Math.max(
+      0,
+      Math.ceil((timerState.endAt - Date.now()) / 1000)
+    );
+  }
+
+  timerState.running = false;
+  timerState.endAt = null;
+
+  saveTimer();
+
+  if (tickHandle) clearInterval(tickHandle);
+  tickHandle = null;
+
+  $("timerMessage").textContent = "Timer paused.";
+  renderTimer();
 }
 
 function resetTimer() {
-    clearInterval(timer);
-    timer = null;
-    seconds = currentMinutes * 60;
-    document.getElementById("timerMessage").textContent = "Timer reset.";
-    displayTime();
+  timerState.running = false;
+  timerState.endAt = null;
+  timerState.remaining = timerState.minutes * 60;
+
+  saveTimer();
+
+  if (tickHandle) clearInterval(tickHandle);
+  tickHandle = null;
+
+  $("timerMessage").textContent = "Timer reset.";
+  renderTimer();
 }
 
-/* THEMES AND DARK MODE */
+function setTimer(minutes, label, button) {
+  if (timerState.running) pauseTimer();
 
-const themeButtons = document.querySelectorAll(".theme-option");
+  timerState.minutes = minutes;
+  timerState.label = label;
+  timerState.remaining = minutes * 60;
+  timerState.endAt = null;
 
-function changeTheme(theme) {
-    document.body.dataset.theme = theme;
-    localStorage.setItem("theme", theme);
+  document.querySelectorAll(".mode-button").forEach(b => {
+    b.classList.toggle("selected", b === button);
+  });
 
-    themeButtons.forEach(button => {
-        button.classList.toggle("selected", button.dataset.choice === theme);
-    });
+  $("timerMessage").textContent = "Ready when you are.";
+
+  saveTimer();
+  renderTimer();
 }
 
-function changeMode(mode) {
-    document.body.dataset.mode = mode;
-    localStorage.setItem("mode", mode);
-
-    document.getElementById("lightMode").classList.toggle(
-        "selected",
-        mode === "light"
+document.querySelectorAll(".mode-button").forEach(button => {
+  button.addEventListener("click", () => {
+    setTimer(
+      Number(button.dataset.minutes),
+      button.dataset.label,
+      button
     );
-
-    document.getElementById("darkMode").classList.toggle(
-        "selected",
-        mode === "dark"
-    );
-}
-
-themeButtons.forEach(button => {
-    button.addEventListener("click", () => {
-        changeTheme(button.dataset.choice);
-    });
+  });
 });
 
-/* LOAD SAVED SETTINGS */
+$("startTimer").addEventListener("click", startTimer);
+$("pauseTimer").addEventListener("click", pauseTimer);
+$("resetTimer").addEventListener("click", resetTimer);
 
-const savedTheme = localStorage.getItem("theme") || "ocean";
-const savedMode = localStorage.getItem("mode") || "light";
+document.addEventListener("visibilitychange", () => {
+  if (timerState.running) timerTick();
+});
 
-changeTheme(savedTheme);
-changeMode(savedMode);
+function restoreTimer() {
+  const saved = readLocal("studytrack_timer", null);
 
-/* UPDATE EVERYTHING */
+  if (
+    saved &&
+    Number.isFinite(saved.minutes) &&
+    Number.isFinite(saved.remaining)
+  ) {
+    timerState = saved;
+  }
 
-function updateAll() {
-    updateAssignments();
-    updateGrades();
-    updateGoals();
+  if (
+    timerState.running &&
+    timerState.endAt &&
+    Date.now() >= timerState.endAt
+  ) {
+    finishTimer();
+  } else if (timerState.running) {
+    tickHandle = setInterval(timerTick, 250);
+  }
 
-    document.getElementById("sessions").textContent = sessions;
+  renderTimer();
 }
 
-updateAll();
-displayTime();
+/* THEMES */
+
+function changeTheme(theme, persist = true) {
+  if (!validThemes.includes(theme)) theme = "ocean";
+
+  document.body.dataset.theme = theme;
+
+  document.querySelectorAll(".theme-option").forEach(button => {
+    button.classList.toggle(
+      "selected",
+      button.dataset.choice === theme
+    );
+  });
+
+  if (persist) scheduleSync();
+}
+
+function changeMode(mode, persist = true) {
+  document.body.dataset.mode =
+    mode === "dark" ? "dark" : "light";
+
+  $("lightMode").classList.toggle("selected", mode !== "dark");
+  $("darkMode").classList.toggle("selected", mode === "dark");
+
+  if (persist) scheduleSync();
+}
+
+document.querySelectorAll(".theme-option").forEach(button => {
+  button.addEventListener("click", () => {
+    changeTheme(button.dataset.choice);
+  });
+});
+
+$("lightMode").addEventListener("click", () => changeMode("light"));
+$("darkMode").addEventListener("click", () => changeMode("dark"));
+
+/* UPDATE WEBSITE */
+
+function updateAll() {
+  updateAssignments();
+  updateGrades();
+  updateGoals();
+  $("sessions").textContent = sessions;
+}
+
+/* START */
+
+async function boot() {
+  applyData(readLocal("studytrack_data", {}));
+  restoreTimer();
+  await initializeAuth();
+}
+
+boot();
