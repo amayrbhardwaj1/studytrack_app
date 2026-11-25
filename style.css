@@ -18,8 +18,6 @@ body {
   color: var(--text);
   font-family: Arial, sans-serif;
   transition: background 0.3s, color 0.3s;
-  background-image: radial-gradient(var(--secondary) 1.5px, transparent 1.5px);
-  background-size: 25px 25px;
 }
 
 header {
@@ -347,7 +345,7 @@ body.dark .assignment-due-status.overdue {
   color: #ff8585;
 }
 
-/* Background pattern choices */
+/* Background image choices */
 .pattern-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -374,57 +372,17 @@ body.dark .assignment-due-status.overdue {
   color: var(--text);
 }
 
-/* Dots */
-body[data-pattern="dots"] {
-  background-image:
-    radial-gradient(var(--secondary) 1.5px, transparent 1.5px);
-  background-size: 25px 25px;
+/* Background image 1 */
+body[data-pattern="image1"] {
+  background-image: url("https://tse3.mm.bing.net/th/id/OIP.gZbJ6sBnQa3jjg6SuecoOQHaEK?r=0&pid=Api&h=220&P=0");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
-/* Floral flowers */
-body[data-pattern="floral"] {
-  background-image:
-    radial-gradient(ellipse 7px 13px at 50% 20%, var(--secondary) 95%, transparent 100%),
-    radial-gradient(ellipse 7px 13px at 80% 50%, var(--secondary) 95%, transparent 100%),
-    radial-gradient(ellipse 7px 13px at 50% 80%, var(--secondary) 95%, transparent 100%),
-    radial-gradient(ellipse 7px 13px at 20% 50%, var(--secondary) 95%, transparent 100%),
-    radial-gradient(circle 5px at 50% 50%, var(--primary) 95%, transparent 100%);
-  background-size: 65px 65px;
-}
-
-/* Space stars */
-body[data-pattern="space"] {
-  background-image:
-    radial-gradient(circle, var(--primary) 1.5px, transparent 2px),
-    radial-gradient(circle, var(--secondary) 2px, transparent 3px),
-    radial-gradient(circle, var(--primary) 1px, transparent 2px);
-  background-size: 55px 55px, 85px 85px, 35px 35px;
-  background-position: 0 0, 20px 20px, 10px 35px;
-}
-
-/* Checkered */
-body[data-pattern="checkered"] {
-  background-image:
-    linear-gradient(45deg, var(--secondary) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--secondary) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--secondary) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--secondary) 75%);
-  background-size: 30px 30px;
-  background-position: 0 0, 0 15px, 15px -15px, -15px 0;
-}
-
-/* Sparkles */
-body[data-pattern="sparkles"] {
-  background-image:
-    radial-gradient(circle, var(--primary) 1px, transparent 2px),
-    radial-gradient(circle, var(--secondary) 2px, transparent 3px),
-    linear-gradient(45deg, transparent 48%, var(--secondary) 49%, var(--secondary) 51%, transparent 52%);
-  background-size: 45px 45px, 70px 70px, 35px 35px;
-  background-position: 0 0, 20px 20px, 10px 10px;
-}
-
-/* Extra background images */
-body[data-pattern="background3"] {
+/* Background image 2 */
+body[data-pattern="image2"] {
   background-image: url("https://tse2.mm.bing.net/th/id/OIP.pTwLJ68-TZ1ivGtUk7v1xwHaFj?r=0&pid=Api&h=220&P=0");
   background-size: cover;
   background-position: center;
@@ -432,7 +390,8 @@ body[data-pattern="background3"] {
   background-repeat: no-repeat;
 }
 
-body[data-pattern="background4"] {
+/* Background image 3 */
+body[data-pattern="image3"] {
   background-image: url("https://tse4.mm.bing.net/th/id/OIP.7EiK68KDZ0TdEIZKMzZymQHaEK?r=0&pid=Api&h=220&P=0");
   background-size: cover;
   background-position: center;
@@ -440,7 +399,7 @@ body[data-pattern="background4"] {
   background-repeat: no-repeat;
 }
 
-/* No pattern */
+/* No background image */
 body[data-pattern="none"] {
   background-image: none;
 }
