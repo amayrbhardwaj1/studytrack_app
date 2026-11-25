@@ -1,4 +1,3 @@
-
 let assignments = JSON.parse(localStorage.getItem("st_assignments")) || [];
 let grades = JSON.parse(localStorage.getItem("st_grades")) || [];
 let goals = JSON.parse(localStorage.getItem("st_goals")) || [];
