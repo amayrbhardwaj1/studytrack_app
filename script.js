@@ -1,3 +1,4 @@
+
 let assignments = JSON.parse(localStorage.getItem("st_assignments")) || [];
 let grades = JSON.parse(localStorage.getItem("st_grades")) || [];
 let goals = JSON.parse(localStorage.getItem("st_goals")) || [];
@@ -8,7 +9,7 @@ let darkMode = localStorage.getItem("st_dark") === "true";
 
 let currentPattern = localStorage.getItem("st_pattern") || "image1";
 
-if (!["image1", "image2", "image3", "none"].includes(currentPattern)) {
+if (!["image1", "image2", "image3", "image4", "none"].includes(currentPattern)) {
   currentPattern = "image1";
 }
 
