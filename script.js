@@ -1,5 +1,5 @@
 
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
 function loadData(key, fallback) {
   try {
@@ -31,11 +31,8 @@ function makeId() {
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
   })[character]);
 }
 
@@ -44,9 +41,7 @@ function formatDate(date) {
   const parsed = new Date(date + "T00:00:00");
   if (Number.isNaN(parsed.getTime())) return date;
   return parsed.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
+    month: "short", day: "numeric", year: "numeric"
   });
 }
 
@@ -64,7 +59,7 @@ function showPage(pageName) {
     assignments: "Assignments",
     calendar: "Calendar",
     timer: "Study Timer",
-    grades: "Grade Tracker",
+    grades: "Grades",
     goals: "Goals",
     settings: "Settings"
   };
@@ -288,11 +283,11 @@ $("calendar-file").addEventListener("change", async event => {
     let added = 0;
 
     imported.forEach(item => {
-      const alreadyExists = assignments.some(existing =>
+      const exists = assignments.some(existing =>
         existing.name === item.name && existing.date === item.date
       );
 
-      if (!alreadyExists) {
+      if (!exists) {
         assignments.push({
           id: makeId(),
           ...item,
@@ -317,9 +312,7 @@ function renderGrades() {
     ? grades.reduce((sum, grade) => sum + grade.value, 0) / grades.length
     : null;
 
-  $("grade-average").textContent = average === null
-    ? "—"
-    : average.toFixed(1) + "%";
+  $("grade-average").textContent = average === null ? "—" : average.toFixed(1) + "%";
 
   $("grade-list").innerHTML = grades.length
     ? grades.map(grade => `
@@ -464,6 +457,37 @@ function stopTimer() {
   $("timer-start").textContent = "Start";
 }
 
+function playTimerSound() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  const audio = new AudioContext();
+
+  audio.resume().then(() => {
+    const oscillator = audio.createOscillator();
+    const volume = audio.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = 880;
+    oscillator.connect(volume);
+    volume.connect(audio.destination);
+
+    const now = audio.currentTime;
+
+    volume.gain.setValueAtTime(0, now);
+
+    for (let i = 0; i < 3; i++) {
+      volume.gain.setValueAtTime(0, now + i * 0.35);
+      volume.gain.linearRampToValueAtTime(0.25, now + i * 0.35 + 0.03);
+      volume.gain.setValueAtTime(0, now + i * 0.35 + 0.2);
+    }
+
+    oscillator.start(now);
+    oscillator.stop(now + 1);
+    oscillator.onended = () => audio.close();
+  }).catch(() => audio.close());
+}
+
 document.querySelectorAll(".mode-btn").forEach(button => {
   button.addEventListener("click", () => {
     stopTimer();
@@ -472,9 +496,9 @@ document.querySelectorAll(".mode-btn").forEach(button => {
     timerSeconds = currentMinutes * 60;
     $("timer-mode").textContent = button.dataset.mode;
 
-    document.querySelectorAll(".mode-btn").forEach(item =>
-      item.classList.toggle("selected", item === button)
-    );
+    document.querySelectorAll(".mode-btn").forEach(item => {
+      item.classList.toggle("selected", item === button);
+    });
 
     updateTimer();
   });
@@ -494,11 +518,14 @@ $("timer-start").addEventListener("click", () => {
       updateTimer();
     } else {
       stopTimer();
+      playTimerSound();
+
       if (currentMinutes === 25) {
         points += 5;
         saveData();
         renderDashboard();
       }
+
       alert(currentMinutes === 25
         ? "Focus session finished! You earned 5 points."
         : "Break finished! Ready to study again?");
@@ -513,14 +540,7 @@ $("timer-reset").addEventListener("click", () => {
 });
 
 $("export-data").addEventListener("click", () => {
-  const data = {
-    assignments,
-    grades,
-    goals,
-    points,
-    theme,
-    darkMode
-  };
+  const data = { assignments, grades, goals, points, theme, darkMode };
 
   const file = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json"
