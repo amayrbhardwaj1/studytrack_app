@@ -1,3 +1,4 @@
+
 :root {
   --background: #eaf4ff;
   --card: #ffffff;
@@ -393,6 +394,15 @@ body[data-pattern="image2"] {
 /* Background image 3 */
 body[data-pattern="image3"] {
   background-image: url("https://tse4.mm.bing.net/th/id/OIP.7EiK68KDZ0TdEIZKMzZymQHaEK?r=0&pid=Api&h=220&P=0");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Background image 4 */
+body[data-pattern="image4"] {
+  background-image: url("https://wallpaperaccess.com/full/2345098.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
