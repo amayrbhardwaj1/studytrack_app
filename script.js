@@ -6,6 +6,7 @@ let points = Number(localStorage.getItem("st_points")) || 0;
 
 let currentTheme = localStorage.getItem("st_theme") || "ocean";
 let darkMode = localStorage.getItem("st_dark") === "true";
+let currentPattern = localStorage.getItem("st_pattern") || "dots";
 
 let calendarDate = new Date();
 let selectedCalendarDate = getDateString(new Date());
@@ -21,6 +22,7 @@ function saveData() {
   localStorage.setItem("st_points", points);
   localStorage.setItem("st_theme", currentTheme);
   localStorage.setItem("st_dark", darkMode);
+  localStorage.setItem("st_pattern", currentPattern);
 }
 
 function escapeHTML(value) {
@@ -709,6 +711,53 @@ document.getElementById("dark-mode").addEventListener("click", () => {
   applyTheme();
 });
 
+/* Background patterns */
+function applyPattern(pattern) {
+  currentPattern = pattern;
+  document.body.dataset.pattern = pattern;
+
+  document.querySelectorAll(".pattern-choice").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.pattern === pattern
+    );
+  });
+
+  localStorage.setItem("st_pattern", pattern);
+}
+
+document.querySelectorAll(".pattern-choice").forEach(button => {
+  button.addEventListener("click", () => {
+    applyPattern(button.dataset.pattern);
+    saveData();
+  });
+});
+
+/* Daily motivational quotes */
+function showDailyQuote() {
+  const quotes = [
+    "Small steps every day lead to big results.",
+    "You are capable of more than you think.",
+    "Progress, not perfection.",
+    "Your future is created by what you do today.",
+    "Believe in yourself and keep going.",
+    "One assignment at a time. You've got this!",
+    "Don't stop until you're proud.",
+    "A little progress each day adds up.",
+    "You don't have to be perfect to make progress.",
+    "Make today count.",
+    "Your hard work will pay off.",
+    "Dream big, work hard, stay focused."
+  ];
+
+  const today = new Date();
+  const quoteIndex = Math.floor(
+    (today.getFullYear() * 366 + today.getMonth() * 31 + today.getDate()) % quotes.length
+  );
+
+  document.getElementById("daily-quote").textContent = quotes[quoteIndex];
+}
+
 document.getElementById("export-data").addEventListener("click", () => {
   const data = {
     assignments,
@@ -716,7 +765,8 @@ document.getElementById("export-data").addEventListener("click", () => {
     goals,
     points,
     currentTheme,
-    darkMode
+    darkMode,
+    currentPattern
   };
 
   const file = new Blob(
@@ -745,6 +795,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   points = 0;
   currentTheme = "ocean";
   darkMode = false;
+  currentPattern = "dots";
 
   stopTimer();
 
@@ -754,9 +805,11 @@ document.getElementById("clear-data").addEventListener("click", () => {
   localStorage.removeItem("st_points");
   localStorage.removeItem("st_theme");
   localStorage.removeItem("st_dark");
+  localStorage.removeItem("st_pattern");
 
   saveData();
   applyTheme();
+  applyPattern(currentPattern);
   refreshAll();
 });
 
@@ -777,6 +830,8 @@ document.getElementById("today").textContent =
   });
 
 applyTheme();
+applyPattern(currentPattern);
+showDailyQuote();
 updateTimer();
 refreshAll();
 showPage("dashboard");
