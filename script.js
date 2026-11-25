@@ -48,6 +48,49 @@ function formatDate(dateString) {
   return new Date(year, month - 1, day).toLocaleDateString();
 }
 
+function getDueInfo(assignment) {
+  if (assignment.completed) {
+    return {
+      text: "Completed",
+      overdue: false
+    };
+  }
+
+  const today = new Date();
+  const [year, month, day] = assignment.date.split("-").map(Number);
+
+  const todayNumber = Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+
+  const dueNumber = Date.UTC(year, month - 1, day);
+
+  const daysLeft = Math.round(
+    (dueNumber - todayNumber) / (1000 * 60 * 60 * 24)
+  );
+
+  if (daysLeft < 0) {
+    return {
+      text: "Past Due",
+      overdue: true
+    };
+  }
+
+  if (daysLeft === 0) {
+    return {
+      text: "Due Today",
+      overdue: false
+    };
+  }
+
+  return {
+    text: `${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`,
+    overdue: false
+  };
+}
+
 function showPage(pageName) {
   document.querySelectorAll(".page").forEach(page => {
     page.classList.toggle("active", page.id === pageName);
@@ -167,15 +210,23 @@ function renderDashboard() {
     return;
   }
 
-  upcomingList.innerHTML = upcoming.map(item => `
-    <div class="assignment-item">
-      <div>
-        <strong>${escapeHTML(item.name)}</strong>
-        <p>${escapeHTML(item.subject || "No subject")}</p>
-        <small>Due: ${formatDate(item.date)}</small>
+  upcomingList.innerHTML = upcoming.map(item => {
+    const dueInfo = getDueInfo(item);
+
+    return `
+      <div class="assignment-item ${dueInfo.overdue ? "overdue" : ""}">
+        <div>
+          <strong>${escapeHTML(item.name)}</strong>
+          <p>${escapeHTML(item.subject || "No subject")}</p>
+          <small>Due: ${formatDate(item.date)}</small>
+          <br>
+          <small class="assignment-due-status ${dueInfo.overdue ? "overdue" : ""}">
+            ${dueInfo.text}
+          </small>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function renderAssignments() {
@@ -199,29 +250,37 @@ function renderAssignments() {
     return;
   }
 
-  list.innerHTML = filtered.map(item => `
-    <div class="assignment-item ${item.completed ? "completed" : ""}">
-      <div>
-        <strong class="assignment-name">${escapeHTML(item.name)}</strong>
-        <p>${escapeHTML(item.subject || "No subject")}</p>
-        <small>Due: ${formatDate(item.date)}</small>
-        <br>
-        <small>Priority: ${escapeHTML(item.priority)}</small>
-      </div>
+  list.innerHTML = filtered.map(item => {
+    const dueInfo = getDueInfo(item);
 
-      <div class="assignment-actions">
-        <button class="small-button" data-action="toggle" data-id="${item.id}">
-          ${item.completed ? "Undo" : "Complete"}
-        </button>
-        <button class="small-button" data-action="edit" data-id="${item.id}">
-          Edit
-        </button>
-        <button class="small-button delete-button" data-action="delete" data-id="${item.id}">
-          Delete
-        </button>
+    return `
+      <div class="assignment-item ${item.completed ? "completed" : ""} ${dueInfo.overdue ? "overdue" : ""}">
+        <div>
+          <strong class="assignment-name">${escapeHTML(item.name)}</strong>
+          <p>${escapeHTML(item.subject || "No subject")}</p>
+          <small>Due: ${formatDate(item.date)}</small>
+          <br>
+          <small>Priority: ${escapeHTML(item.priority)}</small>
+          <br>
+          <small class="assignment-due-status ${dueInfo.overdue ? "overdue" : ""}">
+            ${dueInfo.text}
+          </small>
+        </div>
+
+        <div class="assignment-actions">
+          <button class="small-button" data-action="toggle" data-id="${item.id}">
+            ${item.completed ? "Undo" : "Complete"}
+          </button>
+          <button class="small-button" data-action="edit" data-id="${item.id}">
+            Edit
+          </button>
+          <button class="small-button delete-button" data-action="delete" data-id="${item.id}">
+            Delete
+          </button>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   list.querySelectorAll("button[data-action]").forEach(button => {
     const id = Number(button.dataset.id);
@@ -331,24 +390,32 @@ function renderCalendarAssignments() {
     return;
   }
 
-  list.innerHTML = selectedAssignments.map(item => `
-    <div class="calendar-task ${item.completed ? "completed" : ""}">
-      <div>
-        <strong>${escapeHTML(item.name)}</strong>
-        <p>${escapeHTML(item.subject || "No subject")}</p>
-        <small>Priority: ${escapeHTML(item.priority)}</small>
-      </div>
+  list.innerHTML = selectedAssignments.map(item => {
+    const dueInfo = getDueInfo(item);
 
-      <div class="assignment-actions">
-        <button class="small-button" data-calendar-action="toggle" data-id="${item.id}">
-          ${item.completed ? "Undo" : "Complete"}
-        </button>
-        <button class="small-button delete-button" data-calendar-action="delete" data-id="${item.id}">
-          Delete
-        </button>
+    return `
+      <div class="calendar-task ${item.completed ? "completed" : ""} ${dueInfo.overdue ? "overdue" : ""}">
+        <div>
+          <strong>${escapeHTML(item.name)}</strong>
+          <p>${escapeHTML(item.subject || "No subject")}</p>
+          <small>Priority: ${escapeHTML(item.priority)}</small>
+          <br>
+          <small class="assignment-due-status ${dueInfo.overdue ? "overdue" : ""}">
+            ${dueInfo.text}
+          </small>
+        </div>
+
+        <div class="assignment-actions">
+          <button class="small-button" data-calendar-action="toggle" data-id="${item.id}">
+            ${item.completed ? "Undo" : "Complete"}
+          </button>
+          <button class="small-button delete-button" data-calendar-action="delete" data-id="${item.id}">
+            Delete
+          </button>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   list.querySelectorAll("button[data-calendar-action]").forEach(button => {
     const id = Number(button.dataset.id);
@@ -574,7 +641,6 @@ function renderGoals() {
       if (!goal) return;
 
       goal.completed = checkbox.checked;
-
       points = Math.max(0, points + (goal.completed ? 5 : -5));
 
       saveData();
