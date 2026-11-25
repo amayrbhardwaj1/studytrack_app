@@ -404,6 +404,32 @@ body.dark {
   --border: #414968;
 }
 
+.assignment-item.overdue,
+.calendar-task.overdue {
+  border: 2px solid #d94b4b;
+  background: #fff0f0;
+}
+
+.assignment-due-status {
+  font-weight: bold;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.assignment-due-status.overdue {
+  color: #d32626;
+}
+
+body.dark .assignment-item.overdue,
+body.dark .calendar-task.overdue {
+  background: #432b36;
+  border-color: #e06b75;
+}
+
+body.dark .assignment-due-status.overdue {
+  color: #ff8585;
+}
+
 @media (max-width: 600px) {
   body {
     padding: 10px;
