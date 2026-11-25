@@ -19,12 +19,8 @@ body {
   color: var(--text);
   font-family: Arial, sans-serif;
   transition: background 0.3s, color 0.3s;
-
-  background-image:
-    radial-gradient(circle, var(--secondary) 1.5px, transparent 1.5px),
-    radial-gradient(circle, var(--secondary) 1px, transparent 1px);
-  background-size: 30px 30px, 60px 60px;
-  background-position: 0 0, 15px 15px;
+  background-image: radial-gradient(var(--secondary) 1.5px, transparent 1.5px);
+  background-size: 25px 25px;
 }
 
 header {
@@ -34,6 +30,22 @@ header {
 
 header h1 {
   margin-bottom: 5px;
+}
+
+.quote-banner {
+  max-width: 1100px;
+  margin: 0 auto 20px;
+  padding: 16px;
+  text-align: center;
+  background: var(--secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 17px;
+  line-height: 1.5;
+  font-weight: bold;
+  font-style: italic;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
 }
 
 nav {
@@ -336,6 +348,87 @@ body.dark .assignment-due-status.overdue {
   color: #ff8585;
 }
 
+/* Background pattern choices */
+.pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 15px 0 25px;
+}
+
+.pattern-choice {
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  padding: 15px;
+  transition: 0.2s;
+}
+
+.pattern-choice:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.pattern-choice.active {
+  border: 2px solid var(--primary);
+  background: var(--secondary);
+  color: var(--text);
+}
+
+/* Dots */
+body[data-pattern="dots"] {
+  background-image:
+    radial-gradient(var(--secondary) 1.5px, transparent 1.5px);
+  background-size: 25px 25px;
+}
+
+/* Floral flowers */
+body[data-pattern="floral"] {
+  background-image:
+    radial-gradient(ellipse 7px 13px at 50% 20%, var(--secondary) 95%, transparent 100%),
+    radial-gradient(ellipse 7px 13px at 80% 50%, var(--secondary) 95%, transparent 100%),
+    radial-gradient(ellipse 7px 13px at 50% 80%, var(--secondary) 95%, transparent 100%),
+    radial-gradient(ellipse 7px 13px at 20% 50%, var(--secondary) 95%, transparent 100%),
+    radial-gradient(circle 5px at 50% 50%, var(--primary) 95%, transparent 100%);
+  background-size: 65px 65px;
+}
+
+/* Space stars */
+body[data-pattern="space"] {
+  background-image:
+    radial-gradient(circle, var(--primary) 1.5px, transparent 2px),
+    radial-gradient(circle, var(--secondary) 2px, transparent 3px),
+    radial-gradient(circle, var(--primary) 1px, transparent 2px);
+  background-size: 55px 55px, 85px 85px, 35px 35px;
+  background-position: 0 0, 20px 20px, 10px 35px;
+}
+
+/* Checkered */
+body[data-pattern="checkered"] {
+  background-image:
+    linear-gradient(45deg, var(--secondary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--secondary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--secondary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--secondary) 75%);
+  background-size: 30px 30px;
+  background-position: 0 0, 0 15px, 15px -15px, -15px 0;
+}
+
+/* Sparkles */
+body[data-pattern="sparkles"] {
+  background-image:
+    radial-gradient(circle, var(--primary) 1px, transparent 2px),
+    radial-gradient(circle, var(--secondary) 2px, transparent 3px),
+    linear-gradient(45deg, transparent 48%, var(--secondary) 49%, var(--secondary) 51%, transparent 52%);
+  background-size: 45px 45px, 70px 70px, 35px 35px;
+  background-position: 0 0, 20px 20px, 10px 10px;
+}
+
+/* No pattern */
+body[data-pattern="none"] {
+  background-image: none;
+}
+
 /* Theme colors */
 body[data-theme="ocean"] {
   --background: #eaf4ff;
@@ -417,38 +510,6 @@ body.dark {
   --border: #414968;
 }
 
-/* Background quotes */
-body::after {
-  content:
-    "Small steps every day add up to big results. \A\A"
-    "You are capable of more than you think. \A\A"
-    "Progress, not perfection. \A\A"
-    "Your future is created by what you do today.";
-
-  white-space: pre-line;
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  width: 230px;
-  font-size: 15px;
-  line-height: 2;
-  font-style: italic;
-  font-weight: bold;
-  color: var(--primary);
-  opacity: 0.12;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Keep app content above background decorations */
-header,
-nav,
-main,
-footer {
-  position: relative;
-  z-index: 1;
-}
-
 @media (max-width: 600px) {
   body {
     padding: 10px;
@@ -473,7 +534,8 @@ footer {
     align-items: flex-start;
   }
 
-  body::after {
-    display: none;
+  .quote-banner {
+    font-size: 14px;
+    padding: 12px;
   }
 }
