@@ -5,7 +5,12 @@ let points = Number(localStorage.getItem("st_points")) || 0;
 
 let currentTheme = localStorage.getItem("st_theme") || "ocean";
 let darkMode = localStorage.getItem("st_dark") === "true";
-let currentPattern = localStorage.getItem("st_pattern") || "dots";
+
+let currentPattern = localStorage.getItem("st_pattern") || "image1";
+
+if (!["image1", "image2", "image3", "none"].includes(currentPattern)) {
+  currentPattern = "image1";
+}
 
 let calendarDate = new Date();
 let selectedCalendarDate = getDateString(new Date());
@@ -710,7 +715,7 @@ document.getElementById("dark-mode").addEventListener("click", () => {
   applyTheme();
 });
 
-/* Background patterns */
+/* Background image choices */
 function applyPattern(pattern) {
   currentPattern = pattern;
   document.body.dataset.pattern = pattern;
@@ -794,7 +799,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   points = 0;
   currentTheme = "ocean";
   darkMode = false;
-  currentPattern = "dots";
+  currentPattern = "image1";
 
   stopTimer();
 
