@@ -7,25 +7,28 @@
   <title>StudyTrack</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-theme="ocean">
+
   <aside class="sidebar">
-    <h2 class="logo">StudyTrack<span>.</span></h2>
+    <h2 class="logo">Study<span>Track</span></h2>
+
     <nav>
       <button class="nav-btn active" data-page="dashboard">⌂ Dashboard</button>
       <button class="nav-btn" data-page="assignments">▤ Assignments</button>
       <button class="nav-btn" data-page="calendar">▦ Calendar</button>
       <button class="nav-btn" data-page="timer">◷ Study Timer</button>
-      <button class="nav-btn" data-page="grades">▧ Grade Tracker</button>
-      <button class="nav-btn" data-page="goals">◎ Goals</button>
+      <button class="nav-btn" data-page="grades">▣ Grades</button>
+      <button class="nav-btn" data-page="goals">☆ Goals</button>
       <button class="nav-btn" data-page="settings">⚙ Settings</button>
     </nav>
-    <div class="sidebar-bottom">Stay focused. You've got this!</div>
+
+    <div class="sidebar-bottom">StudyTrack © 2026</div>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">YOUR STUDENT SPACE</p>
+        <p class="eyebrow">YOUR STUDY SPACE</p>
         <h1 id="page-title">Dashboard</h1>
       </div>
       <div class="top-actions">
@@ -37,138 +40,237 @@
     <section class="page active" id="dashboard">
       <div class="welcome">
         <div>
-          <p class="eyebrow">WELCOME BACK</p>
+          <p class="eyebrow">WELCOME TO STUDYTRACK</p>
           <h2>Make today count.</h2>
-          <p>One step at a time. Keep making progress!</p>
+          <p>Stay organised, reach your goals and keep making progress.</p>
         </div>
         <div class="welcome-icon">✦</div>
       </div>
+
       <div class="stats">
-        <article class="stat-card"><p>Total assignments</p><h2 id="total-count">0</h2></article>
-        <article class="stat-card"><p>Completed</p><h2 id="completed-count">0</h2></article>
-        <article class="stat-card"><p>Still to do</p><h2 id="remaining-count">0</h2></article>
-        <article class="stat-card"><p>Your points</p><h2 id="points-count">0</h2></article>
+        <div class="stat-card">
+          <p>Total assignments</p>
+          <h2 id="total-count">0</h2>
+        </div>
+        <div class="stat-card">
+          <p>Completed</p>
+          <h2 id="completed-count">0</h2>
+        </div>
+        <div class="stat-card">
+          <p>Remaining</p>
+          <h2 id="remaining-count">0</h2>
+        </div>
+        <div class="stat-card">
+          <p>Your points</p>
+          <h2 id="points-count">0</h2>
+        </div>
       </div>
+
+      <div class="panel">
+        <div class="panel-heading">
+          <h3>Your progress</h3>
+          <strong id="progress-label">0%</strong>
+        </div>
+        <div class="progress-track">
+          <div id="progress-bar"></div>
+        </div>
+        <p class="muted small" id="progress-text">Add an assignment to get started.</p>
+      </div>
+
       <div class="dashboard-grid">
-        <article class="panel">
-          <div class="panel-heading"><h3>Assignment progress</h3><span id="progress-label">0%</span></div>
-          <div class="progress-track"><div id="progress-bar"></div></div>
-          <p class="muted" id="progress-text">Add an assignment to get started.</p>
-        </article>
-        <article class="panel">
-          <div class="panel-heading"><h3>Upcoming assignments</h3><button class="text-btn" data-go="assignments">See all</button></div>
+        <div class="panel">
+          <h3>Upcoming assignments</h3>
           <div id="upcoming-list" class="simple-list"></div>
-        </article>
+        </div>
+        <div class="panel">
+          <h3>Quick actions</h3>
+          <div class="quick-actions">
+            <button class="secondary-btn" data-go="assignments">Add an assignment</button>
+            <button class="secondary-btn" data-go="timer">Start studying</button>
+            <button class="secondary-btn" data-go="goals">View your goals</button>
+          </div>
+        </div>
       </div>
-      <article class="panel">
-        <div class="panel-heading"><h3>Quick study reminder</h3></div>
-        <p class="muted">Break your work into smaller tasks, take breaks, and remember to celebrate your progress.</p>
-        <button class="primary-btn" data-go="timer">Start studying</button>
-      </article>
     </section>
 
     <section class="page" id="assignments">
-      <div class="section-intro"><div><h2>Your assignments</h2><p class="muted">Keep track of everything you need to finish.</p></div></div>
+      <div class="section-intro">
+        <h2>Your assignments</h2>
+        <p class="muted">Keep track of everything you need to finish.</p>
+      </div>
+
       <form id="assignment-form" class="panel form-grid">
-        <label>Assignment name<input id="assignment-name" required placeholder="e.g. History essay"></label>
-        <label>Subject<input id="assignment-subject" required placeholder="e.g. History"></label>
-        <label>Due date<input id="assignment-date" type="date" required></label>
-        <label>Priority<select id="assignment-priority"><option>Normal</option><option>High</option><option>Low</option></select></label>
+        <label>
+          Assignment name
+          <input id="assignment-name" type="text" placeholder="e.g. Maths homework" required>
+        </label>
+        <label>
+          Subject
+          <input id="assignment-subject" type="text" placeholder="e.g. Mathematics" required>
+        </label>
+        <label>
+          Due date
+          <input id="assignment-date" type="date" required>
+        </label>
+        <label>
+          Priority
+          <select id="assignment-priority">
+            <option>Normal</option>
+            <option>High</option>
+            <option>Low</option>
+          </select>
+        </label>
         <button class="primary-btn form-submit" type="submit">Add assignment</button>
       </form>
+
       <div class="filter-row">
-        <h3>All assignments</h3>
-        <select id="assignment-filter"><option value="all">All</option><option value="active">Not completed</option><option value="done">Completed</option></select>
+        <h3>Your task list</h3>
+        <select id="assignment-filter">
+          <option value="all">All assignments</option>
+          <option value="active">Remaining</option>
+          <option value="done">Completed</option>
+        </select>
       </div>
+
       <div id="assignment-list" class="task-list"></div>
     </section>
 
     <section class="page" id="calendar">
+      <div class="section-intro">
+        <h2>Your calendar</h2>
+        <p class="muted">View your assignments by their due dates or import a calendar.</p>
+      </div>
+
       <div class="panel">
-        <h2>Import your calendar</h2>
-        <p class="muted">Upload an .ics or .csv calendar file to add its events to your assignments.</p>
-        <label class="upload-box">＋ Choose a calendar file<input id="calendar-file" type="file" accept=".ics,.csv"></label>
-        <p class="muted small">CSV files should include columns named title (or summary) and date (or due date).</p>
+        <h3>Import your calendar</h3>
+        <p class="muted">Upload an .ics or .csv calendar file to add events to StudyTrack.</p>
+        <label class="upload-box">
+          <span>＋ Choose a calendar file</span>
+          <input id="calendar-file" type="file" accept=".ics,.csv">
+        </label>
         <p id="import-message" class="message"></p>
       </div>
+
       <div class="panel">
-        <h3>Your scheduled assignments</h3>
+        <h3>Calendar events</h3>
         <div id="calendar-list" class="simple-list"></div>
       </div>
     </section>
 
     <section class="page" id="timer">
-      <div class="timer-panel panel">
+      <div class="panel timer-panel">
         <p class="eyebrow">STAY FOCUSED</p>
         <h2 id="timer-mode">Focus time</h2>
         <div id="timer-display">25:00</div>
+
         <div class="timer-modes">
-          <button class="mode-btn selected" data-minutes="25" data-mode="Focus time">Focus</button>
-          <button class="mode-btn" data-minutes="5" data-mode="Short break">Short break</button>
-          <button class="mode-btn" data-minutes="15" data-mode="Long break">Long break</button>
+          <button class="mode-btn selected" data-mode="Focus time" data-minutes="25">Study · 25 min</button>
+          <button class="mode-btn" data-mode="Short break" data-minutes="5">Short break · 5 min</button>
+          <button class="mode-btn" data-mode="Long break" data-minutes="15">Long break · 15 min</button>
         </div>
+
         <div class="timer-actions">
           <button class="primary-btn" id="timer-start">Start</button>
           <button class="secondary-btn" id="timer-reset">Reset</button>
         </div>
-        <p class="muted">Work for a little while, then give yourself a break.</p>
+
+        <p class="muted small">Complete a focus session to earn 5 points. A sound will play when each timer ends.</p>
       </div>
     </section>
 
     <section class="page" id="grades">
-      <div class="panel">
+      <div class="section-intro">
         <h2>Grade tracker</h2>
-        <p class="muted">Add your grades and keep an eye on your average.</p>
-        <div class="grade-average"><span>Your average</span><strong id="grade-average">—</strong></div>
-        <form id="grade-form" class="form-grid">
-          <label>Subject<input id="grade-subject" required placeholder="e.g. Science"></label>
-          <label>Grade (%)<input id="grade-value" type="number" min="0" max="100" step="0.1" required placeholder="e.g. 92"></label>
-          <button class="primary-btn form-submit" type="submit">Add grade</button>
-        </form>
+        <p class="muted">Keep your grades organised and track your average.</p>
       </div>
-      <div id="grade-list" class="task-list"></div>
+
+      <div class="grade-average">
+        <div>
+          <strong>Your average</strong>
+          <p class="muted">Across all saved grades</p>
+        </div>
+        <strong id="grade-average">—</strong>
+      </div>
+
+      <form id="grade-form" class="panel form-grid">
+        <label>
+          Subject or assessment
+          <input id="grade-subject" type="text" placeholder="e.g. Science test" required>
+        </label>
+        <label>
+          Grade percentage
+          <input id="grade-value" type="number" min="0" max="100" step="0.1" placeholder="e.g. 85" required>
+        </label>
+        <button class="primary-btn form-submit" type="submit">Add grade</button>
+      </form>
+
+      <div class="panel">
+        <h3>Your grades</h3>
+        <div id="grade-list" class="task-list"></div>
+      </div>
     </section>
 
     <section class="page" id="goals">
-      <div class="panel">
+      <div class="section-intro">
         <h2>Your goals</h2>
-        <p class="muted">Set goals and check them off as you reach them.</p>
-        <form id="goal-form" class="inline-form">
-          <input id="goal-name" required placeholder="Write a goal...">
-          <button class="primary-btn" type="submit">Add goal</button>
-        </form>
+        <p class="muted">Set goals and celebrate when you complete them.</p>
       </div>
-      <div id="goal-list" class="task-list"></div>
+
+      <form id="goal-form" class="panel inline-form">
+        <input id="goal-name" type="text" placeholder="Enter a goal..." required>
+        <button class="primary-btn" type="submit">Add goal</button>
+      </form>
+
+      <div class="panel">
+        <h3>Your goals</h3>
+        <div id="goal-list" class="task-list"></div>
+      </div>
     </section>
 
     <section class="page" id="settings">
+      <div class="section-intro">
+        <h2>Personalise StudyTrack</h2>
+        <p class="muted">Choose the colours and appearance you like.</p>
+      </div>
+
       <div class="panel">
-        <h2>Appearance</h2>
-        <p class="muted">Choose a colour theme for StudyTrack.</p>
+        <h3>Colour themes</h3>
         <div class="theme-grid">
-          <button class="theme-choice" data-theme="ocean"><i class="swatch ocean"></i>Ocean</button>
-          <button class="theme-choice" data-theme="mocha"><i class="swatch mocha"></i>Mocha</button>
-          <button class="theme-choice" data-theme="summer"><i class="swatch summer"></i>Summer</button>
-          <button class="theme-choice" data-theme="voltage"><i class="swatch voltage"></i>Voltage</button>
-          <button class="theme-choice" data-theme="forest"><i class="swatch forest"></i>Forest</button>
-          <button class="theme-choice" data-theme="blush"><i class="swatch blush"></i>Blush</button>
-          <button class="theme-choice" data-theme="midnight"><i class="swatch midnight"></i>Midnight</button>
-          <button class="theme-choice" data-theme="sunset"><i class="swatch sunset"></i>Sunset</button>
+          <button class="theme-choice selected" data-theme="ocean"><span class="swatch ocean"></span>Ocean</button>
+          <button class="theme-choice" data-theme="mocha"><span class="swatch mocha"></span>Mocha</button>
+          <button class="theme-choice" data-theme="summer"><span class="swatch summer"></span>Summer</button>
+          <button class="theme-choice" data-theme="voltage"><span class="swatch voltage"></span>Voltage</button>
+          <button class="theme-choice" data-theme="forest"><span class="swatch forest"></span>Forest</button>
+          <button class="theme-choice" data-theme="blush"><span class="swatch blush"></span>Blush</button>
+          <button class="theme-choice" data-theme="midnight"><span class="swatch midnight"></span>Midnight</button>
+          <button class="theme-choice" data-theme="sunset"><span class="swatch sunset"></span>Sunset</button>
         </div>
-        <div class="setting-row"><div><strong>Display mode</strong><p class="muted">Choose light or dark mode.</p></div>
-          <div class="mode-toggle"><button id="light-mode">Light</button><button id="dark-mode">Dark</button></div>
+
+        <div class="setting-row">
+          <div>
+            <strong>Appearance</strong>
+            <p class="muted">Choose light or dark mode.</p>
+          </div>
+          <div class="mode-toggle">
+            <button id="light-mode" class="selected">Light</button>
+            <button id="dark-mode">Dark</button>
+          </div>
         </div>
       </div>
+
       <div class="panel">
-        <h2>Your data</h2>
-        <p class="muted">Your information is saved in this browser on this device.</p>
-        <button class="secondary-btn" id="export-data">Export my data</button>
-        <button class="danger-btn" id="clear-data">Delete all my data</button>
+        <h3>Your data</h3>
+        <p class="muted">Export a backup of your StudyTrack data or clear the data saved in this browser.</p>
+        <div class="quick-actions">
+          <button class="secondary-btn" id="export-data">Export my data</button>
+          <button class="danger-btn" id="clear-data">Clear all data</button>
+        </div>
       </div>
     </section>
 
-    <footer>StudyTrack © 2026</footer>
+    <footer>StudyTrack © 2026 · Made for your goals.</footer>
   </main>
+
   <script src="script.js"></script>
 </body>
 </html>
