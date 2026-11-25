@@ -7,262 +7,168 @@
   <title>StudyTrack</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-theme="ocean" data-mode="light">
+<body>
+  <aside class="sidebar">
+    <h2 class="logo">StudyTrack<span>.</span></h2>
+    <nav>
+      <button class="nav-btn active" data-page="dashboard">⌂ Dashboard</button>
+      <button class="nav-btn" data-page="assignments">▤ Assignments</button>
+      <button class="nav-btn" data-page="calendar">▦ Calendar</button>
+      <button class="nav-btn" data-page="timer">◷ Study Timer</button>
+      <button class="nav-btn" data-page="grades">▧ Grade Tracker</button>
+      <button class="nav-btn" data-page="goals">◎ Goals</button>
+      <button class="nav-btn" data-page="settings">⚙ Settings</button>
+    </nav>
+    <div class="sidebar-bottom">Stay focused. You've got this!</div>
+  </aside>
 
-  <section id="authScreen" class="auth-screen">
-    <div class="auth-card">
-      <div class="brand">Study<span>Track</span></div>
-      <p class="muted">Your personal space to stay organized and focused.</p>
-
-      <div class="auth-tabs">
-        <button id="showLogin" class="tab-button active" type="button">Log in</button>
-        <button id="showSignup" class="tab-button" type="button">Sign up</button>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">YOUR STUDENT SPACE</p>
+        <h1 id="page-title">Dashboard</h1>
       </div>
-
-      <form id="authForm">
-        <label for="authEmail">Email</label>
-        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
-
-        <label for="authPassword">Password</label>
-        <input id="authPassword" type="password" minlength="6" autocomplete="current-password" placeholder="At least 6 characters" required>
-
-        <button id="authSubmit" class="primary-button full-width" type="submit">Log in</button>
-      </form>
-
-      <p id="authMessage" class="form-message" aria-live="polite">Create a free account or log in to continue.</p>
-      <p class="tiny-note">Free to use. No subscriptions or payment details.</p>
-    </div>
-  </section>
-
-  <div id="app" class="app-shell hidden">
-    <aside class="sidebar">
-      <div class="brand">Study<span>Track</span></div>
-      <p class="nav-label">MENU</p>
-
-      <nav>
-        <button class="nav-button active" data-page="dashboard">⌂ Dashboard</button>
-        <button class="nav-button" data-page="assignments">▤ Assignments</button>
-        <button class="nav-button" data-page="timer">◷ Study Timer</button>
-        <button class="nav-button" data-page="grades">▥ Grade Tracker</button>
-        <button class="nav-button" data-page="goals">☆ My Goals</button>
-        <button class="nav-button" data-page="settings">⚙ Settings</button>
-      </nav>
-
-      <div class="sidebar-bottom">
-        <div class="sidebar-note">Small steps lead to big results.</div>
-        <div class="version">STUDYTRACK • FREE</div>
+      <div class="top-actions">
+        <span id="today"></span>
+        <button class="primary-btn" id="quick-add">+ Add task</button>
       </div>
-    </aside>
+    </header>
 
-    <main class="main-content">
-      <header class="topbar">
+    <section class="page active" id="dashboard">
+      <div class="welcome">
         <div>
-          <h1 id="pageTitle">Dashboard</h1>
-          <p id="pageSubtitle">Welcome back! Let's get things done.</p>
+          <p class="eyebrow">WELCOME BACK</p>
+          <h2>Make today count.</h2>
+          <p>One step at a time. Keep making progress!</p>
         </div>
+        <div class="welcome-icon">✦</div>
+      </div>
+      <div class="stats">
+        <article class="stat-card"><p>Total assignments</p><h2 id="total-count">0</h2></article>
+        <article class="stat-card"><p>Completed</p><h2 id="completed-count">0</h2></article>
+        <article class="stat-card"><p>Still to do</p><h2 id="remaining-count">0</h2></article>
+        <article class="stat-card"><p>Your points</p><h2 id="points-count">0</h2></article>
+      </div>
+      <div class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-heading"><h3>Assignment progress</h3><span id="progress-label">0%</span></div>
+          <div class="progress-track"><div id="progress-bar"></div></div>
+          <p class="muted" id="progress-text">Add an assignment to get started.</p>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><h3>Upcoming assignments</h3><button class="text-btn" data-go="assignments">See all</button></div>
+          <div id="upcoming-list" class="simple-list"></div>
+        </article>
+      </div>
+      <article class="panel">
+        <div class="panel-heading"><h3>Quick study reminder</h3></div>
+        <p class="muted">Break your work into smaller tasks, take breaks, and remember to celebrate your progress.</p>
+        <button class="primary-btn" data-go="timer">Start studying</button>
+      </article>
+    </section>
 
-        <div class="topbar-right">
-          <span id="userEmail" class="user-email"></span>
-          <button id="logoutButton" class="secondary-button">Log out</button>
+    <section class="page" id="assignments">
+      <div class="section-intro"><div><h2>Your assignments</h2><p class="muted">Keep track of everything you need to finish.</p></div></div>
+      <form id="assignment-form" class="panel form-grid">
+        <label>Assignment name<input id="assignment-name" required placeholder="e.g. History essay"></label>
+        <label>Subject<input id="assignment-subject" required placeholder="e.g. History"></label>
+        <label>Due date<input id="assignment-date" type="date" required></label>
+        <label>Priority<select id="assignment-priority"><option>Normal</option><option>High</option><option>Low</option></select></label>
+        <button class="primary-btn form-submit" type="submit">Add assignment</button>
+      </form>
+      <div class="filter-row">
+        <h3>All assignments</h3>
+        <select id="assignment-filter"><option value="all">All</option><option value="active">Not completed</option><option value="done">Completed</option></select>
+      </div>
+      <div id="assignment-list" class="task-list"></div>
+    </section>
+
+    <section class="page" id="calendar">
+      <div class="panel">
+        <h2>Import your calendar</h2>
+        <p class="muted">Upload an .ics or .csv calendar file to add its events to your assignments.</p>
+        <label class="upload-box">＋ Choose a calendar file<input id="calendar-file" type="file" accept=".ics,.csv"></label>
+        <p class="muted small">CSV files should include columns named title (or summary) and date (or due date).</p>
+        <p id="import-message" class="message"></p>
+      </div>
+      <div class="panel">
+        <h3>Your scheduled assignments</h3>
+        <div id="calendar-list" class="simple-list"></div>
+      </div>
+    </section>
+
+    <section class="page" id="timer">
+      <div class="timer-panel panel">
+        <p class="eyebrow">STAY FOCUSED</p>
+        <h2 id="timer-mode">Focus time</h2>
+        <div id="timer-display">25:00</div>
+        <div class="timer-modes">
+          <button class="mode-btn selected" data-minutes="25" data-mode="Focus time">Focus</button>
+          <button class="mode-btn" data-minutes="5" data-mode="Short break">Short break</button>
+          <button class="mode-btn" data-minutes="15" data-mode="Long break">Long break</button>
         </div>
-      </header>
-
-      <section id="dashboard" class="page active">
-        <div class="welcome">
-          <div>
-            <p class="welcome-small">YOUR PERSONAL STUDY SPACE</p>
-            <h2>Make today count.</h2>
-            <p>Stay focused, stay organized, and reach your goals.</p>
-          </div>
-          <div class="welcome-symbol">✦</div>
+        <div class="timer-actions">
+          <button class="primary-btn" id="timer-start">Start</button>
+          <button class="secondary-btn" id="timer-reset">Reset</button>
         </div>
+        <p class="muted">Work for a little while, then give yourself a break.</p>
+      </div>
+    </section>
 
-        <div class="stats-grid">
-          <div class="stat-card"><p>Total assignments</p><h2 id="total">0</h2><span>All your tasks</span></div>
-          <div class="stat-card"><p>Completed</p><h2 id="completed">0</h2><span>Tasks finished</span></div>
-          <div class="stat-card"><p>Remaining</p><h2 id="remaining">0</h2><span>Still to do</span></div>
-          <div class="stat-card"><p>Your points</p><h2 id="points">0</h2><span>Keep earning!</span></div>
+    <section class="page" id="grades">
+      <div class="panel">
+        <h2>Grade tracker</h2>
+        <p class="muted">Add your grades and keep an eye on your average.</p>
+        <div class="grade-average"><span>Your average</span><strong id="grade-average">—</strong></div>
+        <form id="grade-form" class="form-grid">
+          <label>Subject<input id="grade-subject" required placeholder="e.g. Science"></label>
+          <label>Grade (%)<input id="grade-value" type="number" min="0" max="100" step="0.1" required placeholder="e.g. 92"></label>
+          <button class="primary-btn form-submit" type="submit">Add grade</button>
+        </form>
+      </div>
+      <div id="grade-list" class="task-list"></div>
+    </section>
+
+    <section class="page" id="goals">
+      <div class="panel">
+        <h2>Your goals</h2>
+        <p class="muted">Set goals and check them off as you reach them.</p>
+        <form id="goal-form" class="inline-form">
+          <input id="goal-name" required placeholder="Write a goal...">
+          <button class="primary-btn" type="submit">Add goal</button>
+        </form>
+      </div>
+      <div id="goal-list" class="task-list"></div>
+    </section>
+
+    <section class="page" id="settings">
+      <div class="panel">
+        <h2>Appearance</h2>
+        <p class="muted">Choose a colour theme for StudyTrack.</p>
+        <div class="theme-grid">
+          <button class="theme-choice" data-theme="ocean"><i class="swatch ocean"></i>Ocean</button>
+          <button class="theme-choice" data-theme="mocha"><i class="swatch mocha"></i>Mocha</button>
+          <button class="theme-choice" data-theme="summer"><i class="swatch summer"></i>Summer</button>
+          <button class="theme-choice" data-theme="voltage"><i class="swatch voltage"></i>Voltage</button>
+          <button class="theme-choice" data-theme="forest"><i class="swatch forest"></i>Forest</button>
+          <button class="theme-choice" data-theme="blush"><i class="swatch blush"></i>Blush</button>
+          <button class="theme-choice" data-theme="midnight"><i class="swatch midnight"></i>Midnight</button>
+          <button class="theme-choice" data-theme="sunset"><i class="swatch sunset"></i>Sunset</button>
         </div>
-
-        <div class="content-card progress-card">
-          <div class="card-heading">
-            <div><h3>Your progress</h3><p>See how much you've completed.</p></div>
-            <strong id="progressText">0%</strong>
-          </div>
-          <div class="progress-track"><div id="progress" class="progress-fill"></div></div>
+        <div class="setting-row"><div><strong>Display mode</strong><p class="muted">Choose light or dark mode.</p></div>
+          <div class="mode-toggle"><button id="light-mode">Light</button><button id="dark-mode">Dark</button></div>
         </div>
+      </div>
+      <div class="panel">
+        <h2>Your data</h2>
+        <p class="muted">Your information is saved in this browser on this device.</p>
+        <button class="secondary-btn" id="export-data">Export my data</button>
+        <button class="danger-btn" id="clear-data">Delete all my data</button>
+      </div>
+    </section>
 
-        <div class="content-card">
-          <div class="card-heading">
-            <div><h3>Upcoming assignments</h3><p>Don't forget what's coming up.</p></div>
-            <button class="small-button" data-go="assignments">View all</button>
-          </div>
-          <div id="dashboardAssignments" class="item-list"></div>
-        </div>
-      </section>
-
-      <section id="assignments" class="page">
-        <div class="section-intro">
-          <h2>Assignment tracker</h2>
-          <p>Add tasks yourself or import them from a calendar file.</p>
-        </div>
-
-        <div class="content-card">
-          <h3>Import your calendar</h3>
-          <p class="muted">Upload an .ics calendar export or a .csv file. StudyTrack will find event titles and dates and turn them into assignments.</p>
-          <div class="upload-row">
-            <input id="calendarFile" type="file" accept=".ics,.csv,text/calendar,text/csv">
-            <button id="importCalendar" class="primary-button" type="button">Import calendar</button>
-          </div>
-          <p id="importMessage" class="form-message" aria-live="polite"></p>
-        </div>
-
-        <div class="content-card">
-          <h3>Add an assignment manually</h3>
-          <form id="assignmentForm" class="form-grid">
-            <input id="assignmentName" placeholder="Assignment name" required>
-            <select id="subject" required>
-              <option value="">Choose subject</option>
-              <option>Math</option>
-              <option>Science</option>
-              <option>English</option>
-              <option>History</option>
-              <option>Technology</option>
-              <option>Other</option>
-            </select>
-            <input id="dueDate" type="date" required>
-            <select id="priority">
-              <option value="Low">Low priority</option>
-              <option value="Medium" selected>Medium priority</option>
-              <option value="High">High priority</option>
-            </select>
-            <button type="submit" class="primary-button">+ Add assignment</button>
-          </form>
-        </div>
-
-        <div class="content-card">
-          <div class="card-heading">
-            <h3>Your assignments</h3>
-            <span id="assignmentCount" class="muted">0 assignments</span>
-          </div>
-          <div id="assignmentList" class="item-list"></div>
-        </div>
-      </section>
-
-      <section id="timer" class="page">
-        <div class="section-intro">
-          <h2>Study timer</h2>
-          <p>The timer keeps its place if you switch pages or refresh.</p>
-        </div>
-
-        <div class="timer-card content-card">
-          <p class="timer-label" id="timerLabel">FOCUS TIME</p>
-          <div id="time" class="timer-display">25:00</div>
-
-          <div class="timer-modes">
-            <button class="mode-button selected" data-minutes="25" data-label="Focus time">Focus</button>
-            <button class="mode-button" data-minutes="5" data-label="Short break">Short break</button>
-            <button class="mode-button" data-minutes="15" data-label="Long break">Long break</button>
-          </div>
-
-          <div class="timer-controls">
-            <button id="startTimer" class="primary-button">Start</button>
-            <button id="pauseTimer" class="secondary-button">Pause</button>
-            <button id="resetTimer" class="secondary-button">Reset</button>
-          </div>
-
-          <p id="timerMessage" class="muted">Ready when you are.</p>
-        </div>
-
-        <div class="content-card sessions-card">
-          <h3>Focus sessions completed</h3>
-          <h2 id="sessions">0</h2>
-        </div>
-      </section>
-
-      <section id="grades" class="page">
-        <div class="section-intro">
-          <h2>Grade tracker</h2>
-          <p>Keep your grades organized and watch your progress.</p>
-        </div>
-
-        <div class="content-card average-card">
-          <p>Your overall average</p>
-          <h2 id="average">0%</h2>
-        </div>
-
-        <div class="content-card">
-          <h3>Add a grade</h3>
-          <form id="gradeForm" class="form-grid">
-            <input id="gradeSubject" placeholder="Subject or assignment" required>
-            <input id="gradeValue" type="number" min="0" max="100" step="0.1" placeholder="Grade (%)" required>
-            <button type="submit" class="primary-button">+ Add grade</button>
-          </form>
-        </div>
-
-        <div class="content-card">
-          <h3>Your grades</h3>
-          <div id="gradeList" class="item-list"></div>
-        </div>
-      </section>
-
-      <section id="goals" class="page">
-        <div class="section-intro">
-          <h2>My goals</h2>
-          <p>Set goals, stay motivated, and celebrate your progress.</p>
-        </div>
-
-        <div class="content-card">
-          <h3>Create a goal</h3>
-          <form id="goalForm" class="form-grid">
-            <input id="goalName" placeholder="What do you want to achieve?" required>
-            <button type="submit" class="primary-button">+ Add goal</button>
-          </form>
-        </div>
-
-        <div class="content-card">
-          <h3>Your goals</h3>
-          <div id="goalList" class="item-list"></div>
-        </div>
-      </section>
-
-      <section id="settings" class="page">
-        <div class="section-intro">
-          <h2>Appearance</h2>
-          <p>Make StudyTrack look the way you want.</p>
-        </div>
-
-        <div class="content-card">
-          <h3>Choose your color theme</h3>
-          <p class="muted">Each theme has its own light and dark mode.</p>
-          <div class="theme-grid">
-            <button class="theme-option" data-choice="ocean"><span class="theme-preview ocean-preview"></span>Ocean</button>
-            <button class="theme-option" data-choice="mocha"><span class="theme-preview mocha-preview"></span>Mocha</button>
-            <button class="theme-option" data-choice="summer"><span class="theme-preview summer-preview"></span>Summer</button>
-            <button class="theme-option" data-choice="voltage"><span class="theme-preview voltage-preview"></span>Voltage</button>
-            <button class="theme-option" data-choice="forest"><span class="theme-preview forest-preview"></span>Forest</button>
-            <button class="theme-option" data-choice="blush"><span class="theme-preview blush-preview"></span>Blush</button>
-            <button class="theme-option" data-choice="midnight"><span class="theme-preview midnight-preview"></span>Midnight</button>
-            <button class="theme-option" data-choice="sunset"><span class="theme-preview sunset-preview"></span>Sunset</button>
-          </div>
-        </div>
-
-        <div class="content-card">
-          <h3>Display mode</h3>
-          <p class="muted">Choose between light and dark mode.</p>
-          <div class="mode-choice">
-            <button id="lightMode" class="mode-choice-button">☀ Light mode</button>
-            <button id="darkMode" class="mode-choice-button">☾ Dark mode</button>
-          </div>
-        </div>
-      </section>
-
-      <footer>StudyTrack © 2026 • Made for better study habits.</footer>
-    </main>
-  </div>
-
-  <!-- Supabase client library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <footer>StudyTrack © 2026</footer>
+  </main>
   <script src="script.js"></script>
 </body>
 </html>
