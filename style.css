@@ -1,4 +1,3 @@
-
 :root {
   --background: #eaf4ff;
   --card: #ffffff;
@@ -422,6 +421,23 @@ body[data-pattern="sparkles"] {
     linear-gradient(45deg, transparent 48%, var(--secondary) 49%, var(--secondary) 51%, transparent 52%);
   background-size: 45px 45px, 70px 70px, 35px 35px;
   background-position: 0 0, 20px 20px, 10px 10px;
+}
+
+/* Extra background images */
+body[data-pattern="background3"] {
+  background-image: url("https://tse2.mm.bing.net/th/id/OIP.pTwLJ68-TZ1ivGtUk7v1xwHaFj?r=0&pid=Api&h=220&P=0");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+body[data-pattern="background4"] {
+  background-image: url("https://tse4.mm.bing.net/th/id/OIP.7EiK68KDZ0TdEIZKMzZymQHaEK?r=0&pid=Api&h=220&P=0");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* No pattern */
