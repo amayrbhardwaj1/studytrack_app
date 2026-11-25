@@ -1,48 +1,36 @@
 
-const $ = id => document.getElementById(id);
+let assignments = JSON.parse(localStorage.getItem("st_assignments")) || [];
+let grades = JSON.parse(localStorage.getItem("st_grades")) || [];
+let goals = JSON.parse(localStorage.getItem("st_goals")) || [];
+let points = Number(localStorage.getItem("st_points")) || 0;
 
-function loadData(key, fallback) {
-  try {
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
+let currentTheme = localStorage.getItem("st_theme") || "ocean";
+let darkMode = localStorage.getItem("st_dark") === "true";
 
-let assignments = loadData("st_assignments", []);
-let grades = loadData("st_grades", []);
-let goals = loadData("st_goals", []);
-let points = loadData("st_points", 0);
-let theme = loadData("st_theme", "ocean");
-let darkMode = loadData("st_dark", false);
+let calendarDate = new Date();
+let selectedCalendarDate = new Date();
+
+let timerSeconds = 25 * 60;
+let currentMinutes = 25;
+let timerInterval = null;
 
 function saveData() {
   localStorage.setItem("st_assignments", JSON.stringify(assignments));
   localStorage.setItem("st_grades", JSON.stringify(grades));
   localStorage.setItem("st_goals", JSON.stringify(goals));
-  localStorage.setItem("st_points", JSON.stringify(points));
-  localStorage.setItem("st_theme", JSON.stringify(theme));
-  localStorage.setItem("st_dark", JSON.stringify(darkMode));
-}
-
-function makeId() {
-  return Date.now().toString() + Math.random().toString(16).slice(2);
+  localStorage.setItem("st_points", points);
+  localStorage.setItem("st_theme", currentTheme);
+  localStorage.setItem("st_dark", darkMode);
 }
 
 function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#39;"
-  })[character]);
-}
-
-function formatDate(date) {
-  if (!date) return "No due date";
-  const parsed = new Date(date + "T00:00:00");
-  if (Number.isNaN(parsed.getTime())) return date;
-  return parsed.toLocaleDateString(undefined, {
-    month: "short", day: "numeric", year: "numeric"
-  });
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
 }
 
 function showPage(pageName) {
@@ -64,7 +52,8 @@ function showPage(pageName) {
     settings: "Settings"
   };
 
-  $("page-title").textContent = titles[pageName] || "Dashboard";
+  if (pageName === "calendar") renderCalendar();
+  document.title = "StudyTrack - " + (titles[pageName] || "Dashboard");
 }
 
 document.querySelectorAll(".nav-btn").forEach(button => {
@@ -75,386 +64,338 @@ document.querySelectorAll("[data-go]").forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.go));
 });
 
-$("quick-add").addEventListener("click", () => {
-  showPage("assignments");
-  $("assignment-name").focus();
-});
-
 function renderDashboard() {
+  const completed = assignments.filter(a => a.completed).length;
   const total = assignments.length;
-  const completed = assignments.filter(item => item.completed).length;
   const remaining = total - completed;
   const percentage = total ? Math.round(completed / total * 100) : 0;
 
-  $("total-count").textContent = total;
-  $("completed-count").textContent = completed;
-  $("remaining-count").textContent = remaining;
-  $("points-count").textContent = points;
-  $("progress-label").textContent = percentage + "%";
-  $("progress-bar").style.width = percentage + "%";
-  $("progress-text").textContent = total
-    ? `${completed} out of ${total} assignments completed.`
-    : "Add an assignment to get started.";
+  document.getElementById("total-count").textContent = total;
+  document.getElementById("completed-count").textContent = completed;
+  document.getElementById("remaining-count").textContent = remaining;
+  document.getElementById("points-count").textContent = points;
+  document.getElementById("progress-label").textContent = percentage + "% completed";
+  document.getElementById("progress-bar").style.width = percentage + "%";
+  document.getElementById("progress-text").textContent =
+    completed + " out of " + total + " assignments completed.";
 
   const upcoming = assignments
-    .filter(item => !item.completed)
+    .filter(a => !a.completed)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
 
-  $("upcoming-list").innerHTML = upcoming.length
-    ? upcoming.map(item => `
-      <div class="simple-item">
-        <div>
-          <strong>${escapeHTML(item.name)}</strong>
-          <small>${escapeHTML(item.subject)} · ${formatDate(item.date)}</small>
-        </div>
-      </div>
-    `).join("")
-    : '<p class="muted">No upcoming assignments. You are all caught up!</p>';
+  const list = document.getElementById("upcoming-list");
+  list.innerHTML = "";
+
+  if (!upcoming.length) {
+    list.textContent = "No upcoming assignments!";
+  }
+
+  upcoming.forEach(a => {
+    const item = document.createElement("div");
+    item.className = "assignment-item";
+    item.textContent = `${a.name} - ${a.subject || "No subject"} - Due ${a.date}`;
+    list.appendChild(item);
+  });
 }
 
 function renderAssignments() {
-  const filter = $("assignment-filter").value;
-  let shown = [...assignments];
+  const list = document.getElementById("assignment-list");
+  const filter = document.getElementById("assignment-filter").value;
 
-  if (filter === "active") shown = shown.filter(item => !item.completed);
-  if (filter === "done") shown = shown.filter(item => item.completed);
+  list.innerHTML = "";
 
-  shown.sort((a, b) => a.date.localeCompare(b.date));
+  let filtered = assignments;
 
-  $("assignment-list").innerHTML = shown.length
-    ? shown.map(item => `
-      <div class="task-card ${item.completed ? "completed" : ""}">
-        <input type="checkbox" data-complete="${item.id}" ${item.completed ? "checked" : ""} aria-label="Mark completed">
-        <div class="task-info">
-          <strong>${escapeHTML(item.name)}</strong>
-          <small>${escapeHTML(item.subject)} · Due ${formatDate(item.date)}</small>
-        </div>
-        <span class="priority ${item.priority === "High" ? "high" : ""}">${escapeHTML(item.priority)}</span>
-        <button class="delete-btn" data-delete-assignment="${item.id}" aria-label="Delete assignment">×</button>
-      </div>
-    `).join("")
-    : '<p class="muted">No assignments here yet.</p>';
+  if (filter === "completed") {
+    filtered = assignments.filter(a => a.completed);
+  } else if (filter === "incomplete") {
+    filtered = assignments.filter(a => !a.completed);
+  }
 
-  renderDashboard();
-  renderCalendar();
+  filtered.sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!filtered.length) {
+    list.textContent = "No assignments found.";
+  }
+
+  filtered.forEach(assignment => {
+    const item = document.createElement("div");
+    item.className = "assignment-item";
+    if (assignment.completed) item.classList.add("completed");
+
+    const details = document.createElement("div");
+    details.innerHTML = `
+      <strong class="assignment-name">${escapeHTML(assignment.name)}</strong>
+      <div>${escapeHTML(assignment.subject || "No subject")}</div>
+      <small>Due: ${escapeHTML(assignment.date)} | Priority: ${escapeHTML(assignment.priority || "Medium")}</small>
+    `;
+
+    const actions = document.createElement("div");
+    actions.className = "assignment-actions";
+
+    const completeButton = document.createElement("button");
+    completeButton.className = "small-button";
+    completeButton.textContent = assignment.completed ? "Undo" : "Complete";
+
+    completeButton.addEventListener("click", () => {
+      assignment.completed = !assignment.completed;
+      points += assignment.completed ? 10 : -10;
+      points = Math.max(0, points);
+      saveData();
+      refreshAll();
+    });
+
+    const editButton = document.createElement("button");
+    editButton.className = "small-button";
+    editButton.textContent = "Edit";
+
+    editButton.addEventListener("click", () => {
+      const newName = prompt("Assignment name:", assignment.name);
+      if (newName === null || !newName.trim()) return;
+
+      const newSubject = prompt("Subject:", assignment.subject || "");
+      if (newSubject === null) return;
+
+      const newDate = prompt("Due date (YYYY-MM-DD):", assignment.date);
+      if (newDate === null) return;
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate) ||
+          Number.isNaN(new Date(newDate + "T00:00:00").getTime())) {
+        alert("Please enter a valid date in YYYY-MM-DD format.");
+        return;
+      }
+
+      assignment.name = newName.trim();
+      assignment.subject = newSubject.trim();
+      assignment.date = newDate;
+
+      saveData();
+      refreshAll();
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "small-button delete-button";
+    deleteButton.textContent = "Delete";
+
+    deleteButton.addEventListener("click", () => {
+      if (!confirm("Delete this assignment?")) return;
+      assignments = assignments.filter(a => a.id !== assignment.id);
+      saveData();
+      refreshAll();
+    });
+
+    actions.append(completeButton, editButton, deleteButton);
+    item.append(details, actions);
+    list.appendChild(item);
+  });
 }
 
-$("assignment-form").addEventListener("submit", event => {
+document.getElementById("assignment-form").addEventListener("submit", event => {
   event.preventDefault();
 
   assignments.push({
-    id: makeId(),
-    name: $("assignment-name").value.trim(),
-    subject: $("assignment-subject").value.trim(),
-    date: $("assignment-date").value,
-    priority: $("assignment-priority").value,
+    id: Date.now(),
+    name: document.getElementById("assignment-name").value.trim(),
+    subject: document.getElementById("assignment-subject").value.trim(),
+    date: document.getElementById("assignment-date").value,
+    priority: document.getElementById("assignment-priority").value,
     completed: false
   });
 
   saveData();
   event.target.reset();
-  renderAssignments();
+  refreshAll();
 });
 
-$("assignment-filter").addEventListener("change", renderAssignments);
+document.getElementById("assignment-filter").addEventListener("change", renderAssignments);
 
-$("assignment-list").addEventListener("change", event => {
-  const id = event.target.dataset.complete;
-  if (!id) return;
+// INTERACTIVE CALENDAR
 
-  const item = assignments.find(assignment => assignment.id === id);
-  if (!item) return;
-
-  if (!item.completed && event.target.checked) points += 10;
-  if (item.completed && !event.target.checked) points = Math.max(0, points - 10);
-
-  item.completed = event.target.checked;
-  saveData();
-  renderAssignments();
-});
-
-$("assignment-list").addEventListener("click", event => {
-  const id = event.target.dataset.deleteAssignment;
-  if (!id) return;
-
-  assignments = assignments.filter(item => item.id !== id);
-  saveData();
-  renderAssignments();
-});
-
-function renderCalendar() {
-  const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
-
-  $("calendar-list").innerHTML = sorted.length
-    ? sorted.map(item => `
-      <div class="simple-item">
-        <div>
-          <strong>${escapeHTML(item.name)}</strong>
-          <small>${escapeHTML(item.subject)} · ${formatDate(item.date)}</small>
-        </div>
-        <span>${item.completed ? "✓ Done" : "Upcoming"}</span>
-      </div>
-    `).join("")
-    : '<p class="muted">Your calendar is empty.</p>';
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-
-  const headers = lines[0].split(",").map(value =>
-    value.trim().toLowerCase().replace(/^"|"$/g, "")
-  );
-
-  const titleIndex = headers.findIndex(value =>
-    ["title", "summary", "assignment", "event", "name"].includes(value)
-  );
-
-  const dateIndex = headers.findIndex(value =>
-    ["date", "due date", "due_date", "start date"].includes(value)
-  );
-
-  const subjectIndex = headers.findIndex(value => value === "subject");
-
-  if (titleIndex === -1 || dateIndex === -1) {
-    throw new Error("Your CSV needs a title and date column.");
-  }
-
-  return lines.slice(1).map(line => {
-    const columns = line.split(",").map(value =>
-      value.trim().replace(/^"|"$/g, "")
-    );
-
-    return {
-      name: columns[titleIndex],
-      date: normalizeDate(columns[dateIndex]),
-      subject: subjectIndex >= 0 ? columns[subjectIndex] : "Imported",
-      priority: "Normal"
-    };
-  }).filter(item => item.name && item.date);
-}
-
-function normalizeDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
+function getCalendarDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-
   return `${year}-${month}-${day}`;
 }
 
-function parseICS(text) {
-  const unfolded = text.replace(/\r?\n[ \t]/g, "");
-  const events = unfolded.split("BEGIN:VEVENT").slice(1);
+function renderCalendar() {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
 
-  return events.map(event => {
-    const summary = event.match(/^SUMMARY(?:;[^:]*)?:(.*)$/m);
-    const date = event.match(/^DTSTART(?:;[^:]*)?:(.*)$/m);
-
-    if (!summary || !date) return null;
-
-    const rawDate = date[1].trim();
-    const match = rawDate.match(/^(\d{4})(\d{2})(\d{2})/);
-
-    if (!match) return null;
-
-    return {
-      name: summary[1].trim().replace(/\\,/g, ",").replace(/\\n/g, " "),
-      date: `${match[1]}-${match[2]}-${match[3]}`,
-      subject: "Imported calendar",
-      priority: "Normal"
-    };
-  }).filter(Boolean);
-}
-
-$("calendar-file").addEventListener("change", async event => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  try {
-    const text = await file.text();
-    const imported = file.name.toLowerCase().endsWith(".ics")
-      ? parseICS(text)
-      : parseCSV(text);
-
-    let added = 0;
-
-    imported.forEach(item => {
-      const exists = assignments.some(existing =>
-        existing.name === item.name && existing.date === item.date
-      );
-
-      if (!exists) {
-        assignments.push({
-          id: makeId(),
-          ...item,
-          completed: false
-        });
-        added++;
-      }
+  document.getElementById("calendar-month").textContent =
+    calendarDate.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric"
     });
 
-    saveData();
-    renderAssignments();
-    $("import-message").textContent = `${added} calendar event(s) imported.`;
-  } catch (error) {
-    $("import-message").textContent = error.message || "Could not read that file.";
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const container = document.getElementById("calendar-days");
+  container.innerHTML = "";
+
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement("div");
+    empty.className = "calendar-day empty";
+    container.appendChild(empty);
   }
 
-  event.target.value = "";
-});
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dateString = getCalendarDate(date);
 
-function renderGrades() {
-  const average = grades.length
-    ? grades.reduce((sum, grade) => sum + grade.value, 0) / grades.length
-    : null;
+    const button = document.createElement("button");
+    button.className = "calendar-day";
 
-  $("grade-average").textContent = average === null ? "—" : average.toFixed(1) + "%";
+    const number = document.createElement("span");
+    number.textContent = day;
+    button.appendChild(number);
 
-  $("grade-list").innerHTML = grades.length
-    ? grades.map(grade => `
-      <div class="task-card">
-        <div class="task-info">
-          <strong>${escapeHTML(grade.subject)}</strong>
-          <small>${grade.value}%</small>
-        </div>
-        <button class="delete-btn" data-delete-grade="${grade.id}" aria-label="Delete grade">×</button>
-      </div>
-    `).join("")
-    : '<p class="muted">No grades added yet.</p>';
+    if (dateString === getCalendarDate(new Date())) {
+      button.classList.add("today");
+    }
+
+    if (dateString === getCalendarDate(selectedCalendarDate)) {
+      button.classList.add("selected");
+    }
+
+    const hasAssignments = assignments.some(a => a.date === dateString);
+
+    if (hasAssignments) {
+      const dot = document.createElement("span");
+      dot.className = "calendar-dot";
+      button.appendChild(dot);
+    }
+
+    button.addEventListener("click", () => {
+      selectedCalendarDate = date;
+      renderCalendar();
+    });
+
+    container.appendChild(button);
+  }
+
+  renderCalendarAssignments();
 }
 
-$("grade-form").addEventListener("submit", event => {
-  event.preventDefault();
+function renderCalendarAssignments() {
+  const dateString = getCalendarDate(selectedCalendarDate);
 
-  const value = Number($("grade-value").value);
-  if (!Number.isFinite(value) || value < 0 || value > 100) {
-    alert("Enter a grade between 0 and 100.");
+  document.getElementById("selected-date").textContent =
+    selectedCalendarDate.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    });
+
+  const list = document.getElementById("calendar-assignment-list");
+  list.innerHTML = "";
+
+  const dayAssignments = assignments.filter(a => a.date === dateString);
+
+  if (!dayAssignments.length) {
+    list.textContent = "No assignments for this day.";
     return;
   }
 
-  grades.push({
-    id: makeId(),
-    subject: $("grade-subject").value.trim(),
-    value
+  dayAssignments.forEach(assignment => {
+    const item = document.createElement("div");
+    item.className = "calendar-task";
+
+    if (assignment.completed) item.classList.add("completed");
+
+    const details = document.createElement("span");
+    details.textContent =
+      `${assignment.name} - ${assignment.subject || "No subject"} - ${assignment.priority || "Medium"}`;
+
+    const actions = document.createElement("div");
+    actions.className = "assignment-actions";
+
+    const completeButton = document.createElement("button");
+    completeButton.className = "small-button";
+    completeButton.textContent = assignment.completed ? "Undo" : "Complete";
+
+    completeButton.addEventListener("click", () => {
+      assignment.completed = !assignment.completed;
+      points = Math.max(0, points + (assignment.completed ? 10 : -10));
+      saveData();
+      refreshAll();
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "small-button delete-button";
+    deleteButton.textContent = "Delete";
+
+    deleteButton.addEventListener("click", () => {
+      if (!confirm("Delete this assignment?")) return;
+      assignments = assignments.filter(a => a.id !== assignment.id);
+      saveData();
+      refreshAll();
+    });
+
+    actions.append(completeButton, deleteButton);
+    item.append(details, actions);
+    list.appendChild(item);
   });
-
-  saveData();
-  event.target.reset();
-  renderGrades();
-});
-
-$("grade-list").addEventListener("click", event => {
-  const id = event.target.dataset.deleteGrade;
-  if (!id) return;
-
-  grades = grades.filter(grade => grade.id !== id);
-  saveData();
-  renderGrades();
-});
-
-function renderGoals() {
-  $("goal-list").innerHTML = goals.length
-    ? goals.map(goal => `
-      <div class="task-card ${goal.completed ? "completed" : ""}">
-        <input type="checkbox" data-complete-goal="${goal.id}" ${goal.completed ? "checked" : ""} aria-label="Complete goal">
-        <div class="task-info"><strong>${escapeHTML(goal.name)}</strong></div>
-        <button class="delete-btn" data-delete-goal="${goal.id}" aria-label="Delete goal">×</button>
-      </div>
-    `).join("")
-    : '<p class="muted">Add a goal you want to work towards.</p>';
 }
 
-$("goal-form").addEventListener("submit", event => {
+document.getElementById("prev-month").addEventListener("click", () => {
+  calendarDate = new Date(
+    calendarDate.getFullYear(),
+    calendarDate.getMonth() - 1,
+    1
+  );
+  renderCalendar();
+});
+
+document.getElementById("next-month").addEventListener("click", () => {
+  calendarDate = new Date(
+    calendarDate.getFullYear(),
+    calendarDate.getMonth() + 1,
+    1
+  );
+  renderCalendar();
+});
+
+document.getElementById("calendar-assignment-form").addEventListener("submit", event => {
   event.preventDefault();
 
-  goals.push({
-    id: makeId(),
-    name: $("goal-name").value.trim(),
+  const name = document.getElementById("calendar-assignment-name").value.trim();
+  const subject = document.getElementById("calendar-assignment-subject").value.trim();
+  const priority = document.getElementById("calendar-assignment-priority").value;
+
+  if (!name) return;
+
+  assignments.push({
+    id: Date.now(),
+    name,
+    subject,
+    date: getCalendarDate(selectedCalendarDate),
+    priority,
     completed: false
   });
 
   saveData();
   event.target.reset();
-  renderGoals();
+  refreshAll();
 });
 
-$("goal-list").addEventListener("change", event => {
-  const id = event.target.dataset.completeGoal;
-  if (!id) return;
-
-  const goal = goals.find(item => item.id === id);
-  if (!goal) return;
-
-  if (!goal.completed && event.target.checked) points += 5;
-  if (goal.completed && !event.target.checked) points = Math.max(0, points - 5);
-
-  goal.completed = event.target.checked;
-  saveData();
-  renderGoals();
-  renderDashboard();
-});
-
-$("goal-list").addEventListener("click", event => {
-  const id = event.target.dataset.deleteGoal;
-  if (!id) return;
-
-  goals = goals.filter(goal => goal.id !== id);
-  saveData();
-  renderGoals();
-});
-
-function applyAppearance() {
-  document.body.dataset.theme = theme;
-  document.body.classList.toggle("dark", darkMode);
-
-  document.querySelectorAll(".theme-choice").forEach(button => {
-    button.classList.toggle("selected", button.dataset.theme === theme);
-  });
-
-  $("light-mode").classList.toggle("selected", !darkMode);
-  $("dark-mode").classList.toggle("selected", darkMode);
-}
-
-document.querySelectorAll(".theme-choice").forEach(button => {
-  button.addEventListener("click", () => {
-    theme = button.dataset.theme;
-    saveData();
-    applyAppearance();
-  });
-});
-
-$("light-mode").addEventListener("click", () => {
-  darkMode = false;
-  saveData();
-  applyAppearance();
-});
-
-$("dark-mode").addEventListener("click", () => {
-  darkMode = true;
-  saveData();
-  applyAppearance();
-});
-
-let timerSeconds = 25 * 60;
-let timerInterval = null;
-let currentMinutes = 25;
+// STUDY TIMER
 
 function updateTimer() {
   const minutes = Math.floor(timerSeconds / 60);
   const seconds = timerSeconds % 60;
 
-  $("timer-display").textContent =
-    `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  document.getElementById("timer-display").textContent =
+    String(minutes).padStart(2, "0") + ":" +
+    String(seconds).padStart(2, "0");
 }
 
 function stopTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
-  $("timer-start").textContent = "Start";
+  document.getElementById("timer-start").textContent = "Start";
 }
 
 function playTimerSound() {
@@ -488,76 +429,224 @@ function playTimerSound() {
   }).catch(() => audio.close());
 }
 
-document.querySelectorAll(".mode-btn").forEach(button => {
-  button.addEventListener("click", () => {
-    stopTimer();
+function finishTimer() {
+  stopTimer();
+  playTimerSound();
 
-    currentMinutes = Number(button.dataset.minutes);
-    timerSeconds = currentMinutes * 60;
-    $("timer-mode").textContent = button.dataset.mode;
+  if (currentMinutes === 25) {
+    points += 5;
+    saveData();
+    renderDashboard();
+    alert("Focus session finished! You earned 5 points.");
+  } else {
+    alert("Break finished! Ready to study again?");
+  }
+}
 
-    document.querySelectorAll(".mode-btn").forEach(item => {
-      item.classList.toggle("selected", item === button);
-    });
-
-    updateTimer();
-  });
-});
-
-$("timer-start").addEventListener("click", () => {
+document.getElementById("timer-start").addEventListener("click", () => {
   if (timerInterval) {
     stopTimer();
     return;
   }
 
-  $("timer-start").textContent = "Pause";
+  document.getElementById("timer-start").textContent = "Pause";
 
   timerInterval = setInterval(() => {
     if (timerSeconds > 0) {
       timerSeconds--;
       updateTimer();
-    } else {
-      stopTimer();
-      playTimerSound();
 
-      if (currentMinutes === 25) {
-        points += 5;
-        saveData();
-        renderDashboard();
+      if (timerSeconds === 0) {
+        finishTimer();
       }
-
-      alert(currentMinutes === 25
-        ? "Focus session finished! You earned 5 points."
-        : "Break finished! Ready to study again?");
     }
   }, 1000);
 });
 
-$("timer-reset").addEventListener("click", () => {
+document.getElementById("timer-reset").addEventListener("click", () => {
   stopTimer();
   timerSeconds = currentMinutes * 60;
   updateTimer();
 });
 
-$("export-data").addEventListener("click", () => {
-  const data = { assignments, grades, goals, points, theme, darkMode };
+document.getElementById("timer-mode").addEventListener("change", event => {
+  stopTimer();
+  currentMinutes = Number(event.target.value);
+  timerSeconds = currentMinutes * 60;
+  updateTimer();
+});
+
+// GRADES
+
+function renderGrades() {
+  const list = document.getElementById("grade-list");
+  list.innerHTML = "";
+
+  if (!grades.length) {
+    list.textContent = "No grades added yet.";
+  }
+
+  grades.forEach(grade => {
+    const item = document.createElement("div");
+    item.className = "grade-item";
+
+    const details = document.createElement("span");
+    details.textContent = `${grade.subject}: ${grade.value}%`;
+
+    const remove = document.createElement("button");
+    remove.className = "small-button delete-button";
+    remove.textContent = "Delete";
+
+    remove.addEventListener("click", () => {
+      grades = grades.filter(g => g.id !== grade.id);
+      saveData();
+      renderGrades();
+    });
+
+    item.append(details, remove);
+    list.appendChild(item);
+  });
+
+  const average = grades.length
+    ? grades.reduce((sum, grade) => sum + Number(grade.value), 0) / grades.length
+    : 0;
+
+  document.getElementById("grade-average").textContent =
+    average.toFixed(1) + "%";
+}
+
+document.getElementById("grade-form").addEventListener("submit", event => {
+  event.preventDefault();
+
+  grades.push({
+    id: Date.now(),
+    subject: document.getElementById("grade-subject").value.trim(),
+    value: Number(document.getElementById("grade-value").value)
+  });
+
+  saveData();
+  event.target.reset();
+  renderGrades();
+});
+
+// GOALS
+
+function renderGoals() {
+  const list = document.getElementById("goal-list");
+  list.innerHTML = "";
+
+  if (!goals.length) {
+    list.textContent = "No goals added yet.";
+  }
+
+  goals.forEach(goal => {
+    const item = document.createElement("div");
+    item.className = "goal-item";
+
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = goal.completed;
+
+    const name = document.createElement("span");
+    name.textContent = goal.name;
+
+    if (goal.completed) name.style.textDecoration = "line-through";
+
+    checkbox.addEventListener("change", () => {
+      goal.completed = checkbox.checked;
+      points = Math.max(0, points + (goal.completed ? 5 : -5));
+      saveData();
+      renderGoals();
+      renderDashboard();
+    });
+
+    label.append(checkbox, name);
+
+    const remove = document.createElement("button");
+    remove.className = "small-button delete-button";
+    remove.textContent = "Delete";
+
+    remove.addEventListener("click", () => {
+      goals = goals.filter(g => g.id !== goal.id);
+      saveData();
+      renderGoals();
+    });
+
+    item.append(label, remove);
+    list.appendChild(item);
+  });
+}
+
+document.getElementById("goal-form").addEventListener("submit", event => {
+  event.preventDefault();
+
+  goals.push({
+    id: Date.now(),
+    name: document.getElementById("goal-name").value.trim(),
+    completed: false
+  });
+
+  saveData();
+  event.target.reset();
+  renderGoals();
+});
+
+// THEMES
+
+function applyTheme() {
+  document.body.dataset.theme = currentTheme;
+  document.body.classList.toggle("dark", darkMode);
+
+  document.querySelectorAll(".theme-choice").forEach(button => {
+    button.style.outline =
+      button.dataset.theme === currentTheme ? "3px solid var(--primary)" : "none";
+  });
+}
+
+document.querySelectorAll(".theme-choice").forEach(button => {
+  button.addEventListener("click", () => {
+    currentTheme = button.dataset.theme;
+    saveData();
+    applyTheme();
+  });
+});
+
+document.getElementById("light-mode").addEventListener("click", () => {
+  darkMode = false;
+  saveData();
+  applyTheme();
+});
+
+document.getElementById("dark-mode").addEventListener("click", () => {
+  darkMode = true;
+  saveData();
+  applyTheme();
+});
+
+// EXPORT AND CLEAR DATA
+
+document.getElementById("export-data").addEventListener("click", () => {
+  const data = {
+    assignments,
+    grades,
+    goals,
+    points
+  };
 
   const file = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json"
   });
 
-  const url = URL.createObjectURL(file);
   const link = document.createElement("a");
-  link.href = url;
-  link.download = "studytrack-data.json";
+  link.href = URL.createObjectURL(file);
+  link.download = "StudyTrack-data.json";
   link.click();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(link.href);
 });
 
-$("clear-data").addEventListener("click", () => {
-  if (!confirm("Are you sure? This will permanently delete your StudyTrack data from this browser.")) {
-    return;
-  }
+document.getElementById("clear-data").addEventListener("click", () => {
+  if (!confirm("Are you sure you want to delete all your StudyTrack data?")) return;
 
   assignments = [];
   grades = [];
@@ -565,23 +654,28 @@ $("clear-data").addEventListener("click", () => {
   points = 0;
 
   saveData();
-  renderAll();
+  refreshAll();
 });
 
-function renderAll() {
+// UPDATE EVERYTHING
+
+function refreshAll() {
+  renderDashboard();
   renderAssignments();
+  renderCalendar();
   renderGrades();
   renderGoals();
-  renderCalendar();
-  renderDashboard();
 }
 
-$("today").textContent = new Date().toLocaleDateString(undefined, {
-  weekday: "short",
-  month: "short",
-  day: "numeric"
-});
+document.getElementById("today").textContent =
+  new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
 
-applyAppearance();
+applyTheme();
 updateTimer();
-renderAll();
+refreshAll();
+showPage("dashboard");
