@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySmart</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="ocean" data-mode="light">
+
+    <aside class="sidebar">
+        <div class="logo">Study<span>Smart.</span></div>
+
+        <p class="nav-label">MENU</p>
+        <nav>
+            <button class="nav-button active" data-page="dashboard">⌂ Dashboard</button>
+            <button class="nav-button" data-page="assignments">▤ Assignments</button>
+            <button class="nav-button" data-page="timer">◷ Study Timer</button>
+            <button class="nav-button" data-page="grades">▥ Grade Tracker</button>
+            <button class="nav-button" data-page="goals">☆ My Goals</button>
+            <button class="nav-button" data-page="settings">⚙ Settings</button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-note">Small steps lead to big results.</div>
+            <div class="version">STUDYSMART • 1.0</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 id="pageTitle">Dashboard</h1>
+                <p id="pageSubtitle">Welcome back! Let's get things done.</p>
+            </div>
+            <div class="profile">S</div>
+        </header>
+
+        <section id="dashboard" class="page active">
+            <div class="welcome">
+                <div>
+                    <p class="welcome-small">YOUR PERSONAL STUDY SPACE</p>
+                    <h2>Make today count.</h2>
+                    <p>Stay focused, stay organized, and reach your goals.</p>
+                </div>
+                <div class="welcome-symbol">✦</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <p>Total assignments</p>
+                    <h2 id="total">0</h2>
+                    <span>All your tasks</span>
+                </div>
+                <div class="stat-card">
+                    <p>Completed</p>
+                    <h2 id="completed">0</h2>
+                    <span>Tasks finished</span>
+                </div>
+                <div class="stat-card">
+                    <p>Remaining</p>
+                    <h2 id="remaining">0</h2>
+                    <span>Still to do</span>
+                </div>
+                <div class="stat-card">
+                    <p>Your points</p>
+                    <h2 id="points">0</h2>
+                    <span>Keep earning!</span>
+                </div>
+            </div>
+
+            <div class="content-card progress-card">
+                <div class="card-heading">
+                    <div>
+                        <h3>Your progress</h3>
+                        <p>See how much you've completed.</p>
+                    </div>
+                    <strong id="progressText">0%</strong>
+                </div>
+                <div class="progress-track">
+                    <div id="progress" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-heading">
+                    <div>
+                        <h3>Upcoming assignments</h3>
+                        <p>Don't forget what's coming up.</p>
+                    </div>
+                    <button class="small-button" onclick="showPage('assignments')">View all</button>
+                </div>
+                <div id="dashboardAssignments" class="item-list"></div>
+            </div>
+        </section>
+
+        <section id="assignments" class="page">
+            <div class="section-intro">
+                <h2>Assignment tracker</h2>
+                <p>Keep track of everything you need to get done.</p>
+            </div>
+
+            <div class="content-card">
+                <h3>Add an assignment</h3>
+                <form id="assignmentForm" class="form-grid">
+                    <input id="assignmentName" placeholder="Assignment name" required>
+                    <select id="subject" required>
+                        <option value="">Choose subject</option>
+                        <option>Math</option>
+                        <option>Science</option>
+                        <option>English</option>
+                        <option>History</option>
+                        <option>Technology</option>
+                        <option>Other</option>
+                    </select>
+                    <input id="dueDate" type="date" required>
+                    <select id="priority">
+                        <option value="Low">Low priority</option>
+                        <option value="Medium" selected>Medium priority</option>
+                        <option value="High">High priority</option>
+                    </select>
+                    <button type="submit" class="primary-button">+ Add assignment</button>
+                </form>
+            </div>
+
+            <div class="content-card">
+                <div class="card-heading">
+                    <h3>Your assignments</h3>
+                    <span id="assignmentCount" class="muted">0 assignments</span>
+                </div>
+                <div id="assignmentList" class="item-list"></div>
+            </div>
+        </section>
+
+        <section id="timer" class="page">
+            <div class="section-intro">
+                <h2>Study timer</h2>
+                <p>Focus on one thing at a time. You've got this.</p>
+            </div>
+
+            <div class="timer-card content-card">
+                <p class="timer-label" id="timerLabel">FOCUS TIME</p>
+                <div id="time" class="timer-display">25:00</div>
+                <div class="timer-modes">
+                    <button class="mode-button selected" onclick="setTimer(25, this, 'Focus time')">Focus</button>
+                    <button class="mode-button" onclick="setTimer(5, this, 'Short break')">Short break</button>
+                    <button class="mode-button" onclick="setTimer(15, this, 'Long break')">Long break</button>
+                </div>
+                <div class="timer-controls">
+                    <button class="primary-button" onclick="startTimer()">Start</button>
+                    <button class="secondary-button" onclick="pauseTimer()">Pause</button>
+                    <button class="secondary-button" onclick="resetTimer()">Reset</button>
+                </div>
+                <p id="timerMessage" class="muted">Ready when you are.</p>
+            </div>
+
+            <div class="content-card sessions-card">
+                <h3>Focus sessions completed</h3>
+                <h2 id="sessions">0</h2>
+            </div>
+        </section>
+
+        <section id="grades" class="page">
+            <div class="section-intro">
+                <h2>Grade tracker</h2>
+                <p>Keep your grades organized and watch your progress.</p>
+            </div>
+
+            <div class="content-card average-card">
+                <p>Your overall average</p>
+                <h2 id="average">0%</h2>
+            </div>
+
+            <div class="content-card">
+                <h3>Add a grade</h3>
+                <form id="gradeForm" class="form-grid">
+                    <input id="gradeSubject" placeholder="Subject or assignment" required>
+                    <input id="gradeValue" type="number" min="0" max="100" step="0.1" placeholder="Grade (%)" required>
+                    <button type="submit" class="primary-button">+ Add grade</button>
+                </form>
+            </div>
+
+            <div class="content-card">
+                <h3>Your grades</h3>
+                <div id="gradeList" class="item-list"></div>
+            </div>
+        </section>
+
+        <section id="goals" class="page">
+            <div class="section-intro">
+                <h2>My goals</h2>
+                <p>Set goals, stay motivated, and celebrate your progress.</p>
+            </div>
+
+            <div class="content-card">
+                <h3>Create a goal</h3>
+                <form id="goalForm" class="form-grid">
+                    <input id="goalName" placeholder="What do you want to achieve?" required>
+                    <button type="submit" class="primary-button">+ Add goal</button>
+                </form>
+            </div>
+
+            <div class="content-card">
+                <h3>Your goals</h3>
+                <div id="goalList" class="item-list"></div>
+            </div>
+        </section>
+
+        <section id="settings" class="page">
+            <div class="section-intro">
+                <h2>Appearance</h2>
+                <p>Make StudySmart look the way you want.</p>
+            </div>
+
+            <div class="content-card">
+                <h3>Choose your color theme</h3>
+                <p class="muted">Each theme has its own light and dark mode.</p>
+
+                <div class="theme-grid">
+                    <button class="theme-option" data-choice="ocean">
+                        <span class="theme-preview ocean-preview"></span>Ocean
+                    </button>
+                    <button class="theme-option" data-choice="mocha">
+                        <span class="theme-preview mocha-preview"></span>Mocha
+                    </button>
+                    <button class="theme-option" data-choice="summer">
+                        <span class="theme-preview summer-preview"></span>Summer
+                    </button>
+                    <button class="theme-option" data-choice="voltage">
+                        <span class="theme-preview voltage-preview"></span>Voltage
+                    </button>
+                    <button class="theme-option" data-choice="forest">
+                        <span class="theme-preview forest-preview"></span>Forest
+                    </button>
+                    <button class="theme-option" data-choice="blush">
+                        <span class="theme-preview blush-preview"></span>Blush
+                    </button>
+                    <button class="theme-option" data-choice="midnight">
+                        <span class="theme-preview midnight-preview"></span>Midnight
+                    </button>
+                    <button class="theme-option" data-choice="sunset">
+                        <span class="theme-preview sunset-preview"></span>Sunset
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <h3>Display mode</h3>
+                <p class="muted">Choose between light and dark mode.</p>
+                <div class="mode-choice">
+                    <button id="lightMode" class="mode-choice-button" onclick="changeMode('light')">☀ Light mode</button>
+                    <button id="darkMode" class="mode-choice-button" onclick="changeMode('dark')">☾ Dark mode</button>
+                </div>
+            </div>
+        </section>
+
+        <footer>StudySmart © 2026 • Made for better study habits.</footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
