@@ -49,6 +49,7 @@ button {
   padding: 10px 15px;
   background: var(--primary);
   color: white;
+  transition: opacity 0.2s, outline 0.2s;
 }
 
 button:hover {
@@ -185,6 +186,7 @@ form input {
 #timer-display {
   font-size: clamp(55px, 12vw, 85px);
   margin: 35px 0;
+  font-weight: bold;
 }
 
 #timer-mode {
@@ -200,6 +202,11 @@ form input {
 
 .theme-choice {
   padding: 15px;
+}
+
+.theme-choice.active {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .mode-btn {
@@ -248,6 +255,7 @@ form input {
 .calendar-day:hover,
 .calendar-day.selected {
   outline: 2px solid var(--primary);
+  outline-offset: 1px;
 }
 
 .calendar-day.today {
@@ -294,6 +302,9 @@ form input {
 
 .calendar-task.completed {
   opacity: 0.6;
+}
+
+.calendar-task.completed strong {
   text-decoration: line-through;
 }
 
@@ -301,6 +312,16 @@ footer {
   text-align: center;
   padding: 25px;
   opacity: 0.7;
+}
+
+.goal-item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goal-item input {
+  min-width: auto;
 }
 
 body[data-theme="ocean"] {
@@ -405,5 +426,9 @@ body.dark {
 
   .calendar-task {
     align-items: flex-start;
+  }
+
+  .calendar-header {
+    flex-wrap: wrap;
   }
 }
