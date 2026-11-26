@@ -204,8 +204,15 @@ function renderStudyTime() {
   const studyTime = document.getElementById("study-time");
   if (!studyTime) return;
 
-  studyTime.textContent = `${hours} hr ${minutes} min ${String(seconds).padStart(2, "0")} sec`;
+  studyTime.textContent =
+    `${hours} hr ${minutes} min ${String(seconds).padStart(2, "0")} sec`;
 }
+
+document.getElementById("reset-study-time").addEventListener("click", () => {
+  totalStudySeconds = 0;
+  localStorage.setItem("st_study_seconds", totalStudySeconds);
+  renderStudyTime();
+});
 
 function renderDashboard() {
   const total = assignments.length;
@@ -217,7 +224,9 @@ function renderDashboard() {
   document.getElementById("completed-count").textContent = completed;
   document.getElementById("remaining-count").textContent = remaining;
   document.getElementById("points-count").textContent = points;
+
   renderStudyTime();
+
   document.getElementById("progress-label").textContent = `${percentage}% completed`;
   document.getElementById("progress-bar").style.width = `${percentage}%`;
   document.getElementById("progress-text").textContent =
