@@ -409,6 +409,14 @@ body[data-pattern="image4"] {
   background-repeat: no-repeat;
 }
 
+/* Custom uploaded background */
+body[data-pattern="custom"] {
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
 /* No background image */
 body[data-pattern="none"] {
   background-image: none;
