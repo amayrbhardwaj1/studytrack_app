@@ -1,4 +1,3 @@
-
 let assignments = JSON.parse(localStorage.getItem("st_assignments")) || [];
 let grades = JSON.parse(localStorage.getItem("st_grades")) || [];
 let goals = JSON.parse(localStorage.getItem("st_goals")) || [];
@@ -125,10 +124,14 @@ function changePoints(amount) {
 function renderStudyTime() {
   const hours = Math.floor(totalStudySeconds / 3600);
   const minutes = Math.floor((totalStudySeconds % 3600) / 60);
-  const seconds = totalStudySeconds % 60;
 
-  document.getElementById("study-time").textContent =
-    `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  if (hours > 0) {
+    document.getElementById("study-time").textContent =
+      `${hours} hr ${minutes} min`;
+  } else {
+    document.getElementById("study-time").textContent =
+      `${minutes} min`;
+  }
 }
 
 function toggleAssignment(id) {
