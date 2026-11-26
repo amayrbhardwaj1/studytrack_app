@@ -8,8 +8,13 @@ let currentTheme = localStorage.getItem("st_theme") || "ocean";
 let darkMode = localStorage.getItem("st_dark") === "true";
 
 let currentPattern = localStorage.getItem("st_pattern") || "image1";
+let customBackground = localStorage.getItem("st_custom_background") || "";
 
-if (!["image1", "image2", "image3", "image4", "none"].includes(currentPattern)) {
+if (!["image1", "image2", "image3", "image4", "custom", "none"].includes(currentPattern)) {
+  currentPattern = "image1";
+}
+
+if (currentPattern === "custom" && !customBackground) {
   currentPattern = "image1";
 }
 
@@ -721,6 +726,12 @@ function applyPattern(pattern) {
   currentPattern = pattern;
   document.body.dataset.pattern = pattern;
 
+  if (pattern === "custom" && customBackground) {
+    document.body.style.backgroundImage = `url("${customBackground}")`;
+  } else {
+    document.body.style.backgroundImage = "";
+  }
+
   document.querySelectorAll(".pattern-choice").forEach(button => {
     button.classList.toggle(
       "active",
@@ -736,6 +747,54 @@ document.querySelectorAll(".pattern-choice").forEach(button => {
     applyPattern(button.dataset.pattern);
     saveData();
   });
+});
+
+/* Import your own background */
+document.getElementById("choose-background").addEventListener("click", () => {
+  document.getElementById("background-upload").click();
+});
+
+document.getElementById("background-upload").addEventListener("change", event => {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    alert("Please choose a JPG, PNG, or WebP image.");
+    event.target.value = "";
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Please choose an image smaller than 2 MB.");
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      customBackground = reader.result;
+      localStorage.setItem("st_custom_background", customBackground);
+
+      applyPattern("custom");
+      saveData();
+
+      alert("Your background has been uploaded!");
+    } catch (error) {
+      alert("This image could not be saved. Try a smaller image.");
+    }
+
+    event.target.value = "";
+  };
+
+  reader.onerror = () => {
+    alert("There was a problem reading your image.");
+    event.target.value = "";
+  };
+
+  reader.readAsDataURL(file);
 });
 
 /* Daily motivational quotes */
@@ -771,7 +830,8 @@ document.getElementById("export-data").addEventListener("click", () => {
     points,
     currentTheme,
     darkMode,
-    currentPattern
+    currentPattern,
+    customBackground
   };
 
   const file = new Blob(
@@ -801,6 +861,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   currentTheme = "ocean";
   darkMode = false;
   currentPattern = "image1";
+  customBackground = "";
 
   stopTimer();
 
@@ -811,6 +872,9 @@ document.getElementById("clear-data").addEventListener("click", () => {
   localStorage.removeItem("st_theme");
   localStorage.removeItem("st_dark");
   localStorage.removeItem("st_pattern");
+  localStorage.removeItem("st_custom_background");
+
+  document.body.style.backgroundImage = "";
 
   saveData();
   applyTheme();
