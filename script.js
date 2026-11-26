@@ -128,17 +128,8 @@ function renderStudyTime() {
   const minutes = Math.floor((totalStudySeconds % 3600) / 60);
   const seconds = totalStudySeconds % 60;
 
-  let display = "";
-
-  if (hours > 0) {
-    display = `${hours} hr ${minutes} min`;
-  } else if (minutes > 0) {
-    display = `${minutes} min`;
-  } else {
-    display = `${seconds} sec`;
-  }
-
-  document.getElementById("study-time").textContent = display;
+  document.getElementById("study-time").textContent =
+    `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function toggleAssignment(id) {
