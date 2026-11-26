@@ -7,7 +7,6 @@ let totalStudySeconds = Number(localStorage.getItem("st_study_seconds")) || 0;
 
 let currentTheme = localStorage.getItem("st_theme") || "ocean";
 let darkMode = localStorage.getItem("st_dark") === "true";
-
 let currentPattern = localStorage.getItem("st_pattern") || "image1";
 let customBackground = localStorage.getItem("st_custom_background") || "";
 
