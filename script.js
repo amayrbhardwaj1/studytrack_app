@@ -936,3 +936,9 @@ showDailyQuote();
 updateTimer();
 refreshAll();
 showPage("dashboard");
+
+document.getElementById("reset-study-time").addEventListener("click", function() {
+  totalStudySeconds = 0;
+  localStorage.setItem("st_study_seconds", 0);
+  renderStudyTime();
+});
