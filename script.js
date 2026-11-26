@@ -1,4 +1,3 @@
-
 let assignments = JSON.parse(localStorage.getItem("st_assignments")) || [];
 let grades = JSON.parse(localStorage.getItem("st_grades")) || [];
 let goals = JSON.parse(localStorage.getItem("st_goals")) || [];
@@ -24,6 +23,7 @@ let selectedCalendarDate = getDateString(new Date());
 let timerSeconds = 25 * 60;
 let currentMinutes = 25;
 let timerInterval = null;
+let totalStudySeconds = Number(localStorage.getItem("st_study_seconds")) || 0;
 
 function saveData() {
   localStorage.setItem("st_assignments", JSON.stringify(assignments));
@@ -33,6 +33,7 @@ function saveData() {
   localStorage.setItem("st_theme", currentTheme);
   localStorage.setItem("st_dark", darkMode);
   localStorage.setItem("st_pattern", currentPattern);
+  localStorage.setItem("st_study_seconds", totalStudySeconds);
 }
 
 function escapeHTML(value) {
@@ -195,6 +196,17 @@ function editAssignment(id) {
   refreshAll();
 }
 
+function renderStudyTime() {
+  const hours = Math.floor(totalStudySeconds / 3600);
+  const minutes = Math.floor((totalStudySeconds % 3600) / 60);
+  const seconds = totalStudySeconds % 60;
+
+  const studyTime = document.getElementById("study-time");
+  if (!studyTime) return;
+
+  studyTime.textContent = `${hours} hr ${minutes} min ${String(seconds).padStart(2, "0")} sec`;
+}
+
 function renderDashboard() {
   const total = assignments.length;
   const completed = assignments.filter(item => item.completed).length;
@@ -205,6 +217,7 @@ function renderDashboard() {
   document.getElementById("completed-count").textContent = completed;
   document.getElementById("remaining-count").textContent = remaining;
   document.getElementById("points-count").textContent = points;
+  renderStudyTime();
   document.getElementById("progress-label").textContent = `${percentage}% completed`;
   document.getElementById("progress-bar").style.width = `${percentage}%`;
   document.getElementById("progress-text").textContent =
@@ -541,6 +554,13 @@ document.getElementById("timer-start").addEventListener("click", () => {
 
   timerInterval = setInterval(() => {
     timerSeconds--;
+
+    if (currentMinutes === 25) {
+      totalStudySeconds++;
+      localStorage.setItem("st_study_seconds", totalStudySeconds);
+      renderStudyTime();
+    }
+
     updateTimer();
 
     if (timerSeconds <= 0) {
@@ -831,7 +851,8 @@ document.getElementById("export-data").addEventListener("click", () => {
     currentTheme,
     darkMode,
     currentPattern,
-    customBackground
+    customBackground,
+    totalStudySeconds
   };
 
   const file = new Blob(
@@ -858,6 +879,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   grades = [];
   goals = [];
   points = 0;
+  totalStudySeconds = 0;
   currentTheme = "ocean";
   darkMode = false;
   currentPattern = "image1";
@@ -869,6 +891,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   localStorage.removeItem("st_grades");
   localStorage.removeItem("st_goals");
   localStorage.removeItem("st_points");
+  localStorage.removeItem("st_study_seconds");
   localStorage.removeItem("st_theme");
   localStorage.removeItem("st_dark");
   localStorage.removeItem("st_pattern");
