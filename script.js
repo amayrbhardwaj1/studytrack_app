@@ -3,6 +3,7 @@ let assignments = JSON.parse(localStorage.getItem("st_assignments")) || [];
 let grades = JSON.parse(localStorage.getItem("st_grades")) || [];
 let goals = JSON.parse(localStorage.getItem("st_goals")) || [];
 let points = Number(localStorage.getItem("st_points")) || 0;
+let totalStudySeconds = Number(localStorage.getItem("st_study_seconds")) || 0;
 
 let currentTheme = localStorage.getItem("st_theme") || "ocean";
 let darkMode = localStorage.getItem("st_dark") === "true";
@@ -30,6 +31,7 @@ function saveData() {
   localStorage.setItem("st_grades", JSON.stringify(grades));
   localStorage.setItem("st_goals", JSON.stringify(goals));
   localStorage.setItem("st_points", points);
+  localStorage.setItem("st_study_seconds", totalStudySeconds);
   localStorage.setItem("st_theme", currentTheme);
   localStorage.setItem("st_dark", darkMode);
   localStorage.setItem("st_pattern", currentPattern);
@@ -62,10 +64,7 @@ function formatDate(dateString) {
 
 function getDueInfo(assignment) {
   if (assignment.completed) {
-    return {
-      text: "Completed",
-      overdue: false
-    };
+    return { text: "Completed", overdue: false };
   }
 
   const today = new Date();
@@ -78,23 +77,14 @@ function getDueInfo(assignment) {
   );
 
   const dueNumber = Date.UTC(year, month - 1, day);
-
-  const daysLeft = Math.round(
-    (dueNumber - todayNumber) / (1000 * 60 * 60 * 24)
-  );
+  const daysLeft = Math.round((dueNumber - todayNumber) / 86400000);
 
   if (daysLeft < 0) {
-    return {
-      text: "Past Due",
-      overdue: true
-    };
+    return { text: "Past Due", overdue: true };
   }
 
   if (daysLeft === 0) {
-    return {
-      text: "Due Today",
-      overdue: false
-    };
+    return { text: "Due Today", overdue: false };
   }
 
   return {
@@ -131,6 +121,24 @@ function changePoints(amount) {
   points = Math.max(0, points + amount);
   saveData();
   renderDashboard();
+}
+
+function renderStudyTime() {
+  const hours = Math.floor(totalStudySeconds / 3600);
+  const minutes = Math.floor((totalStudySeconds % 3600) / 60);
+  const seconds = totalStudySeconds % 60;
+
+  let display = "";
+
+  if (hours > 0) {
+    display = `${hours} hr ${minutes} min`;
+  } else if (minutes > 0) {
+    display = `${minutes} min`;
+  } else {
+    display = `${seconds} sec`;
+  }
+
+  document.getElementById("study-time").textContent = display;
 }
 
 function toggleAssignment(id) {
@@ -209,6 +217,8 @@ function renderDashboard() {
   document.getElementById("progress-bar").style.width = `${percentage}%`;
   document.getElementById("progress-text").textContent =
     `${completed} out of ${total} assignments completed`;
+
+  renderStudyTime();
 
   const upcomingList = document.getElementById("upcoming-list");
 
@@ -543,6 +553,12 @@ document.getElementById("timer-start").addEventListener("click", () => {
     timerSeconds--;
     updateTimer();
 
+    if (currentMinutes === 25) {
+      totalStudySeconds++;
+      localStorage.setItem("st_study_seconds", totalStudySeconds);
+      renderStudyTime();
+    }
+
     if (timerSeconds <= 0) {
       finishTimer();
     }
@@ -721,7 +737,6 @@ document.getElementById("dark-mode").addEventListener("click", () => {
   applyTheme();
 });
 
-/* Background image choices */
 function applyPattern(pattern) {
   currentPattern = pattern;
   document.body.dataset.pattern = pattern;
@@ -749,7 +764,6 @@ document.querySelectorAll(".pattern-choice").forEach(button => {
   });
 });
 
-/* Import your own background */
 document.getElementById("choose-background").addEventListener("click", () => {
   document.getElementById("background-upload").click();
 });
@@ -775,8 +789,8 @@ document.getElementById("background-upload").addEventListener("change", event =>
 
   reader.onload = () => {
     try {
+      localStorage.setItem("st_custom_background", reader.result);
       customBackground = reader.result;
-      localStorage.setItem("st_custom_background", customBackground);
 
       applyPattern("custom");
       saveData();
@@ -797,7 +811,6 @@ document.getElementById("background-upload").addEventListener("change", event =>
   reader.readAsDataURL(file);
 });
 
-/* Daily motivational quotes */
 function showDailyQuote() {
   const quotes = [
     "Small steps every day lead to big results.",
@@ -828,6 +841,7 @@ document.getElementById("export-data").addEventListener("click", () => {
     grades,
     goals,
     points,
+    totalStudySeconds,
     currentTheme,
     darkMode,
     currentPattern,
@@ -858,6 +872,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   grades = [];
   goals = [];
   points = 0;
+  totalStudySeconds = 0;
   currentTheme = "ocean";
   darkMode = false;
   currentPattern = "image1";
@@ -869,6 +884,7 @@ document.getElementById("clear-data").addEventListener("click", () => {
   localStorage.removeItem("st_grades");
   localStorage.removeItem("st_goals");
   localStorage.removeItem("st_points");
+  localStorage.removeItem("st_study_seconds");
   localStorage.removeItem("st_theme");
   localStorage.removeItem("st_dark");
   localStorage.removeItem("st_pattern");
