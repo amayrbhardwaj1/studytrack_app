@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,9 @@
   <title>StudyTrack</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
   <header>
     <h1>StudyTrack</h1>
     <p id="today"></p>
@@ -27,48 +30,77 @@
   </nav>
 
   <main>
+
+    <!-- DASHBOARD -->
     <section id="dashboard" class="page active">
       <h2>Dashboard</h2>
+      <p>Welcome to StudyTrack! Keep track of your schoolwork and goals.</p>
 
       <div class="stats">
+
         <div class="stat-card">
           <h3>Total Assignments</h3>
           <p id="total-count">0</p>
         </div>
+
         <div class="stat-card">
           <h3>Completed</h3>
           <p id="completed-count">0</p>
         </div>
+
         <div class="stat-card">
           <h3>Remaining</h3>
           <p id="remaining-count">0</p>
         </div>
+
         <div class="stat-card">
           <h3>Points</h3>
           <p id="points-count">0</p>
         </div>
+
       </div>
 
-      <h3>Assignment Progress</h3>
+      <h3>Your Progress</h3>
       <p id="progress-label">0% completed</p>
+
       <div class="progress-container">
         <div id="progress-bar"></div>
       </div>
-      <p id="progress-text"></p>
+
+      <p id="progress-text">0 out of 0 assignments completed</p>
 
       <h3>Upcoming Assignments</h3>
       <div id="upcoming-list"></div>
 
-      <button id="quick-add" data-go="assignments">Add Assignment</button>
+      <button type="button" data-go="assignments">Add Assignment</button>
     </section>
 
+
+    <!-- ASSIGNMENTS -->
     <section id="assignments" class="page">
       <h2>Assignments</h2>
+      <p>Add and manage your school assignments.</p>
 
       <form id="assignment-form">
-        <input id="assignment-name" type="text" placeholder="Assignment name" required>
-        <input id="assignment-subject" type="text" placeholder="Subject">
-        <input id="assignment-date" type="date" required>
+
+        <input
+          type="text"
+          id="assignment-name"
+          placeholder="Assignment name"
+          required
+        >
+
+        <input
+          type="text"
+          id="assignment-subject"
+          placeholder="Subject"
+        >
+
+        <input
+          type="date"
+          id="assignment-date"
+          required
+        >
 
         <select id="assignment-priority">
           <option value="Low">Low Priority</option>
@@ -77,7 +109,10 @@
         </select>
 
         <button type="submit">Add Assignment</button>
+
       </form>
+
+      <h3>Your Assignments</h3>
 
       <select id="assignment-filter">
         <option value="all">All Assignments</option>
@@ -88,13 +123,16 @@
       <div id="assignment-list"></div>
     </section>
 
+
+    <!-- CALENDAR -->
     <section id="calendar" class="page">
-      <h2>Calendar</h2>
+      <h2>Assignment Calendar</h2>
+      <p>Select a date to view or add assignments.</p>
 
       <div class="calendar-header">
-        <button id="prev-month" type="button">❮</button>
+        <button type="button" id="prev-month">Previous</button>
         <h3 id="calendar-month"></h3>
-        <button id="next-month" type="button">❯</button>
+        <button type="button" id="next-month">Next</button>
       </div>
 
       <div class="calendar-weekdays">
@@ -110,11 +148,26 @@
       <div id="calendar-days" class="calendar-days"></div>
 
       <div class="calendar-details">
-        <h3 id="selected-date"></h3>
+        <h3 id="selected-date">Assignments</h3>
+
+        <div id="calendar-assignment-list"></div>
+
+        <h3>Add Assignment to This Date</h3>
 
         <form id="calendar-assignment-form">
-          <input id="calendar-assignment-name" type="text" placeholder="Assignment name" required>
-          <input id="calendar-assignment-subject" type="text" placeholder="Subject">
+
+          <input
+            type="text"
+            id="calendar-assignment-name"
+            placeholder="Assignment name"
+            required
+          >
+
+          <input
+            type="text"
+            id="calendar-assignment-subject"
+            placeholder="Subject"
+          >
 
           <select id="calendar-assignment-priority">
             <option value="Low">Low Priority</option>
@@ -122,92 +175,232 @@
             <option value="High">High Priority</option>
           </select>
 
-          <button type="submit">Add Assignment</button>
-        </form>
+          <button type="submit">Add to Calendar</button>
 
-        <div id="calendar-assignment-list"></div>
+        </form>
       </div>
     </section>
 
+
+    <!-- STUDY TIMER -->
     <section id="timer" class="page">
       <h2>Study Timer</h2>
+      <p>Stay focused and take breaks when you need them.</p>
 
       <select id="timer-mode">
-        <option value="25">Study - 25 Minutes</option>
+        <option value="25">Study Session - 25 Minutes</option>
         <option value="5">Short Break - 5 Minutes</option>
         <option value="15">Long Break - 15 Minutes</option>
       </select>
 
       <h1 id="timer-display">25:00</h1>
 
-      <button id="timer-start" type="button">Start</button>
-      <button id="timer-reset" type="button">Reset</button>
+      <button type="button" id="timer-start">Start</button>
+      <button type="button" id="timer-reset">Reset</button>
+
+      <p>Complete a study session to earn 5 points!</p>
     </section>
 
+
+    <!-- GRADES -->
     <section id="grades" class="page">
-      <h2>Grade Tracker</h2>
-      <h3>Average: <span id="grade-average">0%</span></h3>
+      <h2>Grades Tracker</h2>
+      <p>Keep track of your grades and calculate your average.</p>
+
+      <h3>Your Average</h3>
+      <h1 id="grade-average">0.0%</h1>
 
       <form id="grade-form">
-        <input id="grade-subject" type="text" placeholder="Subject" required>
-        <input id="grade-value" type="number" placeholder="Grade (%)" min="0" max="100" required>
+
+        <input
+          type="text"
+          id="grade-subject"
+          placeholder="Subject"
+          required
+        >
+
+        <input
+          type="number"
+          id="grade-value"
+          placeholder="Grade (%)"
+          min="0"
+          max="100"
+          required
+        >
+
         <button type="submit">Add Grade</button>
+
       </form>
 
+      <h3>Your Grades</h3>
       <div id="grade-list"></div>
     </section>
 
+
+    <!-- GOALS -->
     <section id="goals" class="page">
-      <h2>Goals</h2>
+      <h2>My Goals</h2>
+      <p>Set goals and keep track of your progress.</p>
+
+      <p>Complete a goal to earn 5 points!</p>
 
       <form id="goal-form">
-        <input id="goal-name" type="text" placeholder="Enter a goal" required>
+
+        <input
+          type="text"
+          id="goal-name"
+          placeholder="Enter a goal"
+          required
+        >
+
         <button type="submit">Add Goal</button>
+
       </form>
 
+      <h3>Your Goals</h3>
       <div id="goal-list"></div>
     </section>
 
+
+    <!-- SETTINGS -->
     <section id="settings" class="page">
       <h2>Settings</h2>
 
       <h3>Color Themes</h3>
+      <p>Choose the color theme for your StudyTrack.</p>
 
       <div class="theme-grid">
-        <button class="theme-choice" data-theme="ocean">Ocean</button>
-        <button class="theme-choice" data-theme="mocha">Mocha</button>
-        <button class="theme-choice" data-theme="summer">Summer</button>
-        <button class="theme-choice" data-theme="voltage">Voltage</button>
-        <button class="theme-choice" data-theme="forest">Forest</button>
-        <button class="theme-choice" data-theme="blush">Blush</button>
-        <button class="theme-choice" data-theme="midnight">Midnight</button>
-        <button class="theme-choice" data-theme="sunset">Sunset</button>
+
+        <button class="theme-choice" data-theme="ocean">
+          Ocean
+        </button>
+
+        <button class="theme-choice" data-theme="mocha">
+          Mocha
+        </button>
+
+        <button class="theme-choice" data-theme="summer">
+          Summer
+        </button>
+
+        <button class="theme-choice" data-theme="voltage">
+          Voltage
+        </button>
+
+        <button class="theme-choice" data-theme="forest">
+          Forest
+        </button>
+
+        <button class="theme-choice" data-theme="blush">
+          Blush
+        </button>
+
+        <button class="theme-choice" data-theme="midnight">
+          Midnight
+        </button>
+
+        <button class="theme-choice" data-theme="sunset">
+          Sunset
+        </button>
+
       </div>
 
+
       <h3>Display Mode</h3>
-      <button id="light-mode" class="mode-btn" type="button">Light Mode</button>
-      <button id="dark-mode" class="mode-btn" type="button">Dark Mode</button>
+      <p>Choose between light mode and dark mode.</p>
+
+      <button type="button" id="light-mode" class="mode-btn">
+        Light Mode
+      </button>
+
+      <button type="button" id="dark-mode" class="mode-btn">
+        Dark Mode
+      </button>
+
 
       <h3>Background Images</h3>
+      <p>Choose a background for your StudyTrack.</p>
 
-<div class="pattern-grid">
-  <button class="pattern-choice" data-pattern="image1">Background 1</button>
-  <button class="pattern-choice" data-pattern="image2">Background 2</button>
-  <button class="pattern-choice" data-pattern="image3">Background 3</button>
-  <button class="pattern-choice" data-pattern="image4">Background 4</button>
-  <button class="pattern-choice" data-pattern="none">No Background</button>
-</div>
+      <div class="pattern-grid">
+
+        <button
+          type="button"
+          class="pattern-choice"
+          data-pattern="image1"
+        >
+          Background 1
+        </button>
+
+        <button
+          type="button"
+          class="pattern-choice"
+          data-pattern="image2"
+        >
+          Background 2
+        </button>
+
+        <button
+          type="button"
+          class="pattern-choice"
+          data-pattern="image3"
+        >
+          Background 3
+        </button>
+
+        <button
+          type="button"
+          class="pattern-choice"
+          data-pattern="image4"
+        >
+          Background 4
+        </button>
+
+        <button
+          type="button"
+          class="pattern-choice"
+          data-pattern="none"
+        >
+          No Background
+        </button>
+
+      </div>
+
+
+      <h3>Import Your Own Background</h3>
+      <p>Choose a wallpaper saved on your computer.</p>
+
+      <input
+        type="file"
+        id="background-upload"
+        accept="image/png, image/jpeg, image/webp"
+        hidden
+      >
+
+      <button type="button" id="choose-background">
+        Choose Image
+      </button>
+
 
       <h3>Data</h3>
-      <button id="export-data" type="button">Export My Data</button>
-      <button id="clear-data" type="button">Clear All Data</button>
+      <p>Save a copy of your StudyTrack information or clear your data.</p>
+
+      <button type="button" id="export-data">
+        Export My Data
+      </button>
+
+      <button type="button" id="clear-data" class="delete-button">
+        Clear All Data
+      </button>
+
     </section>
+
   </main>
 
   <footer>
-    <p>StudyTrack © 2026</p>
+    <p>StudyTrack | Stay organized. Stay focused. Reach your goals.</p>
   </footer>
 
   <script src="script.js"></script>
+
 </body>
 </html>
